@@ -144,7 +144,7 @@ export const App = () => {
               onOpenPlant={setSelectedId}
             />
           ) : (
-            <SettingsScreen plants={plants} settings={settings} theme={theme} />
+            <SettingsScreen plants={plants} settings={settings} theme={theme} update={update} />
           )}
         </main>
 

@@ -3,6 +3,7 @@ import { useRef, useState, type ChangeEvent, type ComponentType } from 'react'
 import { DownloadIcon, UploadIcon, type IconProps } from '../../components/icons'
 import { importPlants } from '../../db/plants'
 import { saveGardenerName } from '../../db/settings'
+import type { AppUpdate } from '../../hooks/useAppUpdate'
 import type { ThemeControl } from '../../hooks/useTheme'
 import { t, tCount } from '../../i18n'
 import { backupFileName, createBackup, parseBackup } from '../../lib/backup'
@@ -60,9 +61,10 @@ interface SettingsScreenProps {
   plants: readonly Plant[]
   settings: GardenSettings
   theme: ThemeControl
+  update: AppUpdate
 }
 
-export const SettingsScreen = ({ plants, settings, theme }: SettingsScreenProps) => {
+export const SettingsScreen = ({ plants, settings, theme, update }: SettingsScreenProps) => {
   const fileInput = useRef<HTMLInputElement>(null)
   const [notice, setNotice] = useState<Notice | null>(null)
   /* An import can bring a name along — the field then has to remount. */
@@ -183,9 +185,42 @@ export const SettingsScreen = ({ plants, settings, theme }: SettingsScreenProps)
         </div>
       </section>
 
-      <p className="text-muted px-1.5 text-xs">
-        {t('app.name')} · {t('settings.version', { version: __APP_VERSION__ })}
-      </p>
+      <section>
+        <h2 className="text-muted px-0.5 pb-2.5 text-[11px] tracking-[0.08em] uppercase">
+          {t('update.sectionTitle')}
+        </h2>
+
+        <div className="bg-surface shadow-card flex flex-col gap-3 rounded-lg px-4.5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">{t('app.name')}</span>
+              <span className="text-muted text-xs">
+                {t('settings.version', { version: __APP_VERSION__ })}
+              </span>
+            </span>
+
+            {/*
+              The reload an installed PWA does not have. Hidden where no service
+              worker is registered — in the dev server there is nothing to check.
+            */}
+            {update.supported && (
+              <button
+                type="button"
+                onClick={update.check}
+                disabled={update.checking}
+                className="bg-bed text-muted flex-none rounded-sm px-3.5 py-2 text-[13px] font-medium transition disabled:opacity-60"
+              >
+                {update.checking ? t('update.checking') : t('update.check')}
+              </button>
+            )}
+          </div>
+
+          {update.ready && <p className="text-primary text-xs">{t('update.found')}</p>}
+          {!update.ready && update.upToDate && (
+            <p className="text-muted text-xs">{t('update.upToDate')}</p>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

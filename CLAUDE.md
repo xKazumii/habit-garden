@@ -589,14 +589,29 @@ Overlays liegen gestaffelt über der Shell — Detail-Sheet `z-20`, Anpflanzen
 Das Sheet schließt auf drei Wegen: Tippen auf den Hintergrund, Escape und Zug am
 Griff nach unten (ab 96 px oder bei schnellem Wisch).
 
-Der Zug hängt **nur am Griff**, nicht am ganzen Sheet — der Inhalt scrollt, beide
-Gesten am selben Element kämen sich in die Quere. Der Griff hat deshalb
-`touch-none` und einen großzügigen Trefferbereich, ist aber `aria-hidden`: für
-Tastatur und Screenreader gibt es Escape und die beschriftete Fläche dahinter.
+Der Zug funktioniert **auf der ganzen Karte**. Weil die Karte gleichzeitig der
+Scroll-Container ist, trennen zwei Regeln die Gesten:
 
-Eine Falle beim Ändern: `animate-rise` läuft mit `fill-mode: both` und würde ein
-inline gesetztes `transform` überstimmen. Die Klasse fliegt deshalb nach
-`onAnimationEnd` raus, bevor der Zug greift.
+- Ein Zug beginnt nur, wenn der Inhalt **ganz oben** steht und der Finger nach
+  **unten** geht. Weiter unten scrollt dieselbe Bewegung.
+- Der **Griff zieht immer**, unabhängig von der Scroll-Position — er ist die eine
+  Stelle, die genau das verspricht. Markiert über `data-sheet-handle`.
+
+Drei Fallen beim Ändern:
+
+- **Den nativen Scroll stoppt nur ein `touchmove`-Listener mit
+  `{ passive: false }`.** `preventDefault()` auf einem Pointer-Event hält einen
+  Scroll nicht auf, den der Browser schon begonnen hat. Deshalb der `useEffect`
+  mit dem manuell registrierten Listener statt `onTouchMove`.
+- **`touch-action: none` auf dem Sheet würde das Scrollen ganz abschalten.** Es
+  steht nur auf dem Griff.
+- **`animate-rise` läuft mit `fill-mode: both`** und würde ein inline gesetztes
+  `transform` überstimmen. Die Klasse fliegt nach `onAnimationEnd` raus, bevor
+  der Zug greift.
+
+Ein Tap wird erst ab 6 px Bewegung zum Zug, damit Knöpfe im Sheet weiter normal
+reagieren. Sobald der Zug beginnt, übernimmt `setPointerCapture` — der Knopf
+unter dem Finger bekommt dann kein Klick-Event mehr, was gewollt ist.
 
 ### Zeitbezug in der UI
 

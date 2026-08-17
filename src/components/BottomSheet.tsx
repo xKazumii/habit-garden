@@ -4,12 +4,19 @@ import { t } from '../i18n'
 
 /**
  * Bottom sheet: dimmed backdrop, content rises from below.
- * Closes on a tap outside, on Escape — and on dragging the handle down.
+ * Closes on a tap outside, on Escape, and on dragging it down.
  *
- * The drag is bound **only** to the handle, not to the whole sheet. The content
- * scrolls (`overflow-y-auto`); if every touch started a drag the two gestures
- * would fight each other. The handle therefore gets a generous hit area and
- * `touch-none` so the browser does not scroll there itself.
+ * The drag works **anywhere on the card**, which takes some care because the
+ * card is also the scroll container. Two rules keep the gestures apart:
+ *
+ *  - a drag only starts when the content is scrolled to the very top and the
+ *    finger moves *down*. Anywhere below the top, a downward move scrolls.
+ *  - the grab handle always drags, whatever the scroll position — it is the one
+ *    affordance that promises exactly this.
+ *
+ * Cancelling the native scroll needs a non-passive `touchmove` listener:
+ * `preventDefault()` on a pointer event does not stop a scroll the browser has
+ * already begun.
  */
 
 const ESCAPE_KEY = 'Escape'
@@ -18,10 +25,18 @@ const ESCAPE_KEY = 'Escape'
 const DISMISS_DISTANCE_PX = 96
 /** A quick flick closes earlier too — in pixels per millisecond. */
 const DISMISS_VELOCITY = 0.5
+/** Movement before a touch counts as a drag rather than a tap. */
+const DRAG_START_THRESHOLD_PX = 6
+/** Subpixel scroll offsets should still count as "at the top". */
+const SCROLL_TOP_TOLERANCE_PX = 1
+
+const HANDLE_ATTRIBUTE = 'data-sheet-handle'
 
 interface DragStart {
   y: number
   time: number
+  scrollTop: number
+  fromHandle: boolean
 }
 
 interface BottomSheetProps {
@@ -32,7 +47,11 @@ interface BottomSheetProps {
 }
 
 export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps) => {
+  const sheetRef = useRef<HTMLDivElement>(null)
   const start = useRef<DragStart | null>(null)
+  /* Mirrors `isDragging` for the touchmove listener, which sees no re-renders. */
+  const dragging = useRef(false)
+
   const [dragY, setDragY] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   /*
@@ -51,27 +70,61 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [onClose])
 
+  useEffect(() => {
+    const element = sheetRef.current
+    if (!element) return
+
+    // Only reachable as a non-passive listener, so React's onTouchMove is out.
+    const blockNativeScroll = (event: TouchEvent) => {
+      if (dragging.current) event.preventDefault()
+    }
+
+    element.addEventListener('touchmove', blockNativeScroll, { passive: false })
+    return () => element.removeEventListener('touchmove', blockNativeScroll)
+  }, [])
+
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId)
-    start.current = { y: event.clientY, time: event.timeStamp }
-    setIsDragging(true)
+    const target = event.target as HTMLElement | null
+
+    start.current = {
+      y: event.clientY,
+      time: event.timeStamp,
+      scrollTop: sheetRef.current?.scrollTop ?? 0,
+      fromHandle: target?.closest(`[${HANDLE_ATTRIBUTE}]`) !== null && target !== null,
+    }
   }
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!start.current) return
+    const from = start.current
+    if (!from) return
+
+    const delta = event.clientY - from.y
+
+    if (!dragging.current) {
+      const atTop = from.scrollTop <= SCROLL_TOP_TOLERANCE_PX
+      if (!from.fromHandle && !atTop) return
+      if (delta < DRAG_START_THRESHOLD_PX) return
+
+      dragging.current = true
+      setIsDragging(true)
+      event.currentTarget.setPointerCapture(event.pointerId)
+    }
+
     // Downwards only: the sheet must not stretch upwards.
-    setDragY(Math.max(0, event.clientY - start.current.y))
+    setDragY(Math.max(0, delta))
   }
 
   const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    if (!start.current) return
-
-    const distance = Math.max(0, event.clientY - start.current.y)
-    const duration = event.timeStamp - start.current.time
-    const velocity = duration > 0 ? distance / duration : 0
-
+    const from = start.current
     start.current = null
+
+    if (!from || !dragging.current) return
+    dragging.current = false
     setIsDragging(false)
+
+    const distance = Math.max(0, event.clientY - from.y)
+    const duration = event.timeStamp - from.time
+    const velocity = duration > 0 ? distance / duration : 0
 
     if (distance > DISMISS_DISTANCE_PX || velocity > DISMISS_VELOCITY) {
       onClose()
@@ -90,9 +143,14 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
       />
 
       <div
+        ref={sheetRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         onAnimationEnd={(event) => {
           // Only our own animation counts, not the children's.
           if (event.target === event.currentTarget) setHasEntered(true)
@@ -102,21 +160,19 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
           transition: isDragging
             ? 'none'
             : 'transform var(--hg-duration-base) var(--hg-ease-soft)',
+          userSelect: isDragging ? 'none' : undefined,
         }}
-        className={`bg-canvas shadow-sheet rounded-t-sheet pb-safe-sheet relative max-h-[88%] overflow-y-auto px-5.5 ${
+        className={`bg-canvas shadow-sheet rounded-t-sheet pb-safe-sheet relative max-h-[88%] overflow-y-auto overscroll-contain px-5.5 ${
           hasEntered ? '' : 'animate-rise'
         }`}
       >
         {/*
-          Pointer gesture only — keyboard and screen readers have Escape and the
-          labelled backdrop, so a second close control would just be noise.
+          Decorative: the drag lives on the whole card. Keyboard and screen
+          readers have Escape and the labelled backdrop.
         */}
         <div
           aria-hidden="true"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
+          {...{ [HANDLE_ATTRIBUTE]: true }}
           className="flex cursor-grab touch-none justify-center pt-3 pb-2 active:cursor-grabbing"
         >
           <span className="bg-muted h-[5px] w-11 rounded-full opacity-30" />

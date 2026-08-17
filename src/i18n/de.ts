@@ -75,6 +75,11 @@ export const de = {
   update: {
     available: 'Neue Version verfügbar',
     apply: 'Laden',
+    sectionTitle: 'App-Version',
+    check: 'Nach Updates suchen',
+    checking: 'Wird geprüft …',
+    upToDate: 'Du hast die neueste Version.',
+    found: 'Neue Version gefunden — tippe oben auf „Laden".',
   },
 
   reward: {
