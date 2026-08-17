@@ -41,12 +41,39 @@ GitHub Actions**. Das lässt sich nicht aus dem Repo heraus setzen.
 
 ---
 
+## Updates in der installierten App
+
+Eine installierte PWA hat **keinen Reload-Knopf**. Deshalb registriert die App
+den Service Worker selbst (`src/hooks/useAppUpdate.ts`) und zeigt einen Hinweis,
+wenn eine neue Version wartet — `UpdateBanner`, Knopf „Laden".
+
+Drei Einstellungen hängen zusammen und dürfen nicht einzeln geändert werden:
+
+| Stelle | Wert | Warum |
+| --- | --- | --- |
+| `registerType` | `'prompt'` | bei `'autoUpdate'` lädt die Seite ohne Rückfrage neu — mitten im Tippen wäre die Eingabe weg |
+| `injectRegister` | `null` | sonst registriert das Plugin ein zweites Mal neben unserem Hook |
+| Registrierung | `virtual:pwa-register` im Hook | nur so bekommen wir `onNeedRefresh` |
+
+**Die Falle, die das ersetzt:** mit `registerType: 'autoUpdate'` **und** dem
+eingespritzten `registerSW.js` enthielt die Registrierung gar keine
+Reload-Logik. Die neue Version wurde beim Start geladen, angezeigt aber erst beim
+*nächsten* — man brauchte zwei Starts, um ein Update zu sehen. Auf iOS heißt das
+zusätzlich: aus dem App-Switcher wischen, Hintergrund reicht nicht.
+
+Der Worker wartet jetzt und übernimmt erst auf `SKIP_WAITING` — nachprüfbar in
+`dist/sw.js`. Zusätzlich fragt der Hook bei `visibilitychange` und `focus` nach
+einer neuen Version, weil eine offene PWA tagelang kein `load` sieht. **Kein
+Timer**, dieselbe Auslösung wie bei `useNow()`.
+
+---
+
 ## Stack
 
 - **Vite 8** + **React 19** + **TypeScript 7**
 - **Tailwind CSS 4** über `@tailwindcss/vite`, CSS-first (`@theme inline`)
 - **Dexie 4** für IndexedDB (`dexie-react-hooks` für `useLiveQuery`)
-- **vite-plugin-pwa** (`generateSW`, `registerType: 'autoUpdate'`)
+- **vite-plugin-pwa** (`generateSW`, `registerType: 'prompt'`, `injectRegister: null`)
 - **Vitest 4** für die Kernlogik
 - **Outfit** selbst gehostet über `@fontsource-variable/outfit` — kein
   Google-Fonts-CDN, weil die App offline laufen muss

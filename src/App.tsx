@@ -3,12 +3,14 @@ import { useCallback, useState, type ReactNode } from 'react'
 import { CoinReward, type CoinRewardState } from './components/CoinReward'
 import { PlantFab } from './components/PlantFab'
 import { TabBar } from './components/TabBar'
+import { UpdateBanner } from './components/UpdateBanner'
 import { COINS_PER_WATERING } from './config/economy'
 import { DEFAULT_TAB, type TabId } from './config/tabs'
 import { editPlant, uprootPlant, waterPlant, type PlantEdit } from './db/plants'
 import { completeOnboarding } from './db/settings'
 import { useNow } from './hooks/useNow'
 import { usePlants } from './hooks/usePlants'
+import { useAppUpdate } from './hooks/useAppUpdate'
 import { useSettings } from './hooks/useSettings'
 import { useTheme } from './hooks/useTheme'
 import { t } from './i18n'
@@ -43,6 +45,7 @@ export const App = () => {
   const plants = usePlants(now)
   const settings = useSettings()
   const theme = useTheme()
+  const update = useAppUpdate()
 
   const [tab, setTab] = useState<TabId>(DEFAULT_TAB)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -184,6 +187,9 @@ export const App = () => {
        cover the area under the notch. */
     <div className="pl-safe pr-safe relative mx-auto flex h-svh w-full max-w-md flex-col overflow-hidden">
       {content()}
+
+      {/* Outside content() so it also shows while loading or onboarding. */}
+      {update.ready && <UpdateBanner onApply={update.apply} />}
     </div>
   )
 }

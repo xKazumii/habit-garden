@@ -72,6 +72,11 @@ export const de = {
     ginkgo: { name: 'Ginkgo' },
   },
 
+  update: {
+    available: 'Neue Version verfügbar',
+    apply: 'Laden',
+  },
+
   reward: {
     coins: {
       one: '+1 Münze',

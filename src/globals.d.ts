@@ -1,3 +1,5 @@
+/// <reference types="vite-plugin-pwa/client" />
+
 /**
  * Constants injected at build time.
  * They are populated in vite.config.ts under `define`.

@@ -54,8 +54,14 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      /*
+       * 'prompt' rather than 'autoUpdate': the app asks before reloading. An
+       * installed PWA has no reload button, so src/hooks/useAppUpdate.ts
+       * registers the worker itself and surfaces a banner — hence
+       * injectRegister: null, otherwise the plugin would register a second time.
+       */
+      registerType: 'prompt',
+      injectRegister: null,
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         id: BASE_PATH,
