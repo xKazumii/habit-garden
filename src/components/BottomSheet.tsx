@@ -6,11 +6,14 @@ import { t } from '../i18n'
  * Bottom sheet: dimmed backdrop, content rises from below.
  * Closes on a tap outside, on Escape, and on dragging it down.
  *
- * The drag works **anywhere on the card**, which takes some care because the
- * card is also the scroll container. Two rules keep the gestures apart:
+ * The card is a fixed header holding the grab handle plus a scrolling body, so
+ * the handle stays reachable however far the content is scrolled.
  *
- *  - a drag only starts when the content is scrolled to the very top and the
- *    finger moves *down*. Anywhere below the top, a downward move scrolls.
+ * The drag works **anywhere on the card**, which takes some care because the
+ * body also scrolls. Two rules keep the gestures apart:
+ *
+ *  - a drag only starts when the body is scrolled to the very top and the finger
+ *    moves *down*. Anywhere below the top, a downward move scrolls.
  *  - the grab handle always drags, whatever the scroll position — it is the one
  *    affordance that promises exactly this.
  *
@@ -47,7 +50,8 @@ interface BottomSheetProps {
 }
 
 export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps) => {
-  const sheetRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
   const start = useRef<DragStart | null>(null)
   /* Mirrors `isDragging` for the touchmove listener, which sees no re-renders. */
   const dragging = useRef(false)
@@ -71,7 +75,7 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
   }, [onClose])
 
   useEffect(() => {
-    const element = sheetRef.current
+    const element = cardRef.current
     if (!element) return
 
     // Only reachable as a non-passive listener, so React's onTouchMove is out.
@@ -89,8 +93,8 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
     start.current = {
       y: event.clientY,
       time: event.timeStamp,
-      scrollTop: sheetRef.current?.scrollTop ?? 0,
-      fromHandle: target?.closest(`[${HANDLE_ATTRIBUTE}]`) !== null && target !== null,
+      scrollTop: bodyRef.current?.scrollTop ?? 0,
+      fromHandle: target !== null && target.closest(`[${HANDLE_ATTRIBUTE}]`) !== null,
     }
   }
 
@@ -143,7 +147,7 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
       />
 
       <div
-        ref={sheetRef}
+        ref={cardRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
@@ -162,7 +166,7 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
             : 'transform var(--hg-duration-base) var(--hg-ease-soft)',
           userSelect: isDragging ? 'none' : undefined,
         }}
-        className={`bg-canvas shadow-sheet rounded-t-sheet pb-safe-sheet relative max-h-[88%] overflow-y-auto overscroll-contain px-5.5 ${
+        className={`bg-canvas shadow-sheet rounded-t-sheet relative flex max-h-[88%] flex-col ${
           hasEntered ? '' : 'animate-rise'
         }`}
       >
@@ -173,12 +177,18 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
         <div
           aria-hidden="true"
           {...{ [HANDLE_ATTRIBUTE]: true }}
-          className="flex cursor-grab touch-none justify-center pt-3 pb-2 active:cursor-grabbing"
+          className="flex flex-none cursor-grab touch-none justify-center pt-3 pb-2 active:cursor-grabbing"
         >
           <span className="bg-muted h-[5px] w-11 rounded-full opacity-30" />
         </div>
 
-        {children}
+        {/* `min-h-0` is what lets a flex child actually scroll. */}
+        <div
+          ref={bodyRef}
+          className="pb-safe-sheet min-h-0 flex-1 overflow-y-auto overscroll-contain px-5.5"
+        >
+          {children}
+        </div>
       </div>
     </div>
   )

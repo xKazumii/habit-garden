@@ -73,10 +73,24 @@ einem Worker mit derselben Skript-URL kontrolliert wurde. **In der installierten
 PWA gilt das nicht zuverlässig:** der neue Worker übernimmt, aber niemand lädt
 neu, und der Knopf wirkt kaputt. Im Browser fällt das nicht auf.
 
-Deshalb hängt `apply()` an `controllerchange` auf `navigator.serviceWorker` — das
-Ereignis hat diese Bedingung nicht — plus einem Fallback-Timeout von 1800 ms.
-Falls der Worker doch nicht aktiviert wurde, kommt der Banner nach dem Neuladen
-einfach wieder; ein Knopf, der sichtbar nichts tut, ist schlimmer.
+Deshalb eskaliert `apply()` in zwei Stufen:
+
+1. **Höflich.** `SKIP_WAITING` über beide Wege (`updateSW()` und direkt an
+   `registration.waiting`), Reload auf `controllerchange` von
+   `navigator.serviceWorker` — dieses Ereignis kennt kein `isUpdate`.
+2. **Nach `HANDOVER_TIMEOUT_MS` (1200 ms) mit Gewalt.** `dropWorkerAndCaches()`
+   meldet jede Registrierung ab, löscht jeden Cache-Storage-Eintrag und lädt neu.
+
+Stufe 2 braucht es, weil ein blanker Reload dort nichts hilft: der **alte** Worker
+ist weiter zuständig und liefert weiter die alten Dateien — die App sieht
+unverändert aus und der Banner kommt zurück. Ohne Registrierung und ohne Cache ist
+der Reload eine gewöhnliche Netz-Navigation und kann nicht die alte Version
+bringen. Der Worker registriert sich beim nächsten Start selbst neu.
+
+**Der Garten bleibt dabei heil.** Gelöscht wird nur die Cache Storage API, in der
+ausschließlich die App-Dateien liegen. IndexedDB — Pflanzen, Einstellungen,
+Käufe — ist ein getrennter Speicher und wird nicht angefasst. Wer hier etwas
+ändert, muss diese Trennung kennen.
 
 ---
 
@@ -601,8 +615,20 @@ Overlays liegen gestaffelt über der Shell — Detail-Sheet `z-20`, Anpflanzen
 Das Sheet schließt auf drei Wegen: Tippen auf den Hintergrund, Escape und Zug am
 Griff nach unten (ab 96 px oder bei schnellem Wisch).
 
-Der Zug funktioniert **auf der ganzen Karte**. Weil die Karte gleichzeitig der
-Scroll-Container ist, trennen zwei Regeln die Gesten:
+Die Karte ist ein `flex flex-col` mit `max-h-[88%]` und besteht aus zwei Teilen:
+
+| Teil | Klassen | Zweck |
+| --- | --- | --- |
+| Griffzeile | `flex-none touch-none` | bleibt oben stehen |
+| Inhalt | `flex-1 min-h-0 overflow-y-auto overscroll-contain` | scrollt allein |
+
+**Die Karte selbst scrollt nicht** — sonst würde der Griff mit wegscrollen. Das
+Padding (`px-5.5`, `pb-safe-sheet`) sitzt deshalb am Inhalt, nicht an der Karte.
+`min-h-0` ist Pflicht: ohne das schrumpft ein Flex-Kind nicht unter seine
+Inhaltshöhe und scrollt nie.
+
+Der Zug funktioniert **auf der ganzen Karte**. Weil der Inhalt gleichzeitig
+scrollt, trennen zwei Regeln die Gesten:
 
 - Ein Zug beginnt nur, wenn der Inhalt **ganz oben** steht und der Finger nach
   **unten** geht. Weiter unten scrollt dieselbe Bewegung.
@@ -614,7 +640,8 @@ Drei Fallen beim Ändern:
 - **Den nativen Scroll stoppt nur ein `touchmove`-Listener mit
   `{ passive: false }`.** `preventDefault()` auf einem Pointer-Event hält einen
   Scroll nicht auf, den der Browser schon begonnen hat. Deshalb der `useEffect`
-  mit dem manuell registrierten Listener statt `onTouchMove`.
+  mit dem manuell registrierten Listener statt `onTouchMove`. Er hängt an der
+  **Karte**, nicht am Inhalt — Touch-Events blubbern hoch, also reicht das eine.
 - **`touch-action: none` auf dem Sheet würde das Scrollen ganz abschalten.** Es
   steht nur auf dem Griff.
 - **`animate-rise` läuft mit `fill-mode: both`** und würde ein inline gesetztes
