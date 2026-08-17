@@ -80,6 +80,20 @@ export const editPlant = async (id: string, changes: PlantEdit): Promise<void> =
 export const uprootPlant = (id: string): Promise<void> => db.plants.delete(id)
 
 /**
+ * Übernimmt Pflanzen aus einer Sicherung.
+ *
+ * Zusammenführend über die id, nicht ersetzend: dieselbe Datei zweimal zu
+ * importieren ändert nichts, und ein Import löscht nie etwas, das nur im
+ * Browser steht. Geprüft wurde bereits in src/lib/backup.ts.
+ */
+export const importPlants = async (plants: readonly Plant[]): Promise<number> => {
+  if (plants.length === 0) return 0
+
+  await db.plants.bulkPut([...plants])
+  return plants.length
+}
+
+/**
  * Schreibt für alle Pflanzen einen inzwischen erkannten Tod fest.
  *
  * Reine Bequemlichkeit für Abfragen — die Anzeige braucht das nicht, weil der

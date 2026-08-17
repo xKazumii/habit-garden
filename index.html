@@ -9,15 +9,41 @@
       content="Ein digitaler Garten für deine Gewohnheiten. Jede Gewohnheit ist eine Pflanze — erledige sie, gieße sie, sieh sie wachsen."
     />
     <!-- Passt zum App-Hintergrund, damit die Statusleiste nahtlos wirkt.
-         Muss mit THEME_COLOR in vite.config.ts übereinstimmen. Wenn der Dark
-         Mode ausgebaut wird, kommt hier eine zweite Variante mit
-         media="(prefers-color-scheme: dark)" dazu. -->
+         Der Wert hier ist die helle Variante und muss mit THEME_COLOR in
+         vite.config.ts übereinstimmen. Im Dark Mode schreibt das Skript unten
+         die dunkle Variante hinein. -->
     <meta name="theme-color" content="#FAF7F2" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Habit Garden" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+    <!--
+      Setzt das Theme VOR dem ersten Paint. Ein React-Effekt liefe erst danach,
+      die App würde beim Laden kurz hell aufblitzen.
+
+      Die drei Werte stehen bewusst doppelt: hier und in src/config/theme.ts.
+      Das Skript muss vor dem Bundle laufen und kann deshalb nichts importieren.
+      src/lib/theme.test.ts vergleicht beide Stellen.
+    -->
+    <script>
+      ;(() => {
+        try {
+          const stored = localStorage.getItem('habit-garden-theme')
+          const dark =
+            stored === 'dark' ||
+            (stored !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute('content', dark ? '#1B241E' : '#FAF7F2')
+        } catch {
+          /* Privater Modus ohne localStorage: dann eben hell. */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

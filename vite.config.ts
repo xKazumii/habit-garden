@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -34,8 +36,20 @@ const ICONS = [
 
 const PRECACHE_GLOB = ['**/*.{js,css,html,svg,png,ico,woff2}']
 
+/**
+ * Die Version steht nur in der package.json. Sie wird zur Bauzeit als
+ * `__APP_VERSION__` eingesetzt (deklariert in src/globals.d.ts), damit die
+ * Einstellungen sie anzeigen können, ohne dass eine zweite Stelle driftet.
+ */
+const { version: APP_VERSION } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+) as { version: string }
+
 export default defineConfig({
   base: BASE_PATH,
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
   plugins: [
     react(),
     tailwindcss(),

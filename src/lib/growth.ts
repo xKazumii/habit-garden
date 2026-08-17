@@ -36,7 +36,7 @@ const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value))
 
 /** Schützt die Division in `missedIntervalsFor` gegen kaputte Daten. */
-const safeIntervalDays = (intervalDays: number): number =>
+export const safeIntervalDays = (intervalDays: number): number =>
   Number.isFinite(intervalDays) ? Math.max(MIN_INTERVAL_DAYS, Math.trunc(intervalDays)) : MIN_INTERVAL_DAYS
 
 /**

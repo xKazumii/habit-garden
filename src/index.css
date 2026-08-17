@@ -7,11 +7,15 @@
  * Alle Farben, Radien, Schatten und Kurven stehen hier als CSS-Variablen — nichts
  * davon wird in Komponenten hart kodiert.
  *
- * Der Dark Mode ist als [data-theme="dark"]-Block vorbereitet (tiefes Waldgrün
- * statt Schwarz), aber absichtlich noch nicht aktiviert: kein
- * prefers-color-scheme, kein Umschalter. Zum Ausbauen reicht später das Attribut.
+ * Der Dark Mode ist tiefes Waldgrün statt Schwarz. Gesteuert wird er über
+ * [data-theme] auf <html>, das immer den aufgelösten Wert trägt (light oder
+ * dark, nie system) — gesetzt vom Inline-Skript in index.html und danach von
+ * src/hooks/useTheme.ts. Deshalb steht hier bewusst KEIN
+ * @media (prefers-color-scheme): das wäre eine zweite Kopie der Palette.
  */
 :root {
+  color-scheme: light;
+
   /* Flächen */
   --hg-canvas: #faf7f2;
   --hg-surface: #ffffff;
@@ -34,6 +38,8 @@
   --hg-text: #2e3a32;
   --hg-muted: #6b7a6e;
   --hg-on-primary: #ffffff;
+  /* Terrakotta bleibt in beiden Themes gleich, die Schrift darauf also auch. */
+  --hg-on-accent: #ffffff;
 
   /* Zustände der Pflanzen. Die Illustration selbst entsättigt zusätzlich
      über CSS-Filter — siehe HEALTH_RENDER in der CLAUDE.md. */
@@ -45,6 +51,10 @@
   /* Erde unter der Pflanze */
   --hg-soil: #bc9271;
   --hg-soil-dry: #b08b6c;
+  /* Aufhellung auf dem Erdhügel — bleibt in beiden Themes gleich, Erde ist Erde */
+  --hg-soil-highlight: rgba(255, 255, 255, 0.14);
+  --hg-seed: #7b5b3e;
+  --hg-seed-sheen: rgba(255, 255, 255, 0.3);
   --hg-plant-shadow: rgba(46, 58, 50, 0.1);
 
   /* Heatmap der letzten 8 Wochen */
@@ -61,11 +71,15 @@
   --hg-shadow-lifted: 0 22px 50px -34px rgba(46, 58, 50, 0.5);
   --hg-shadow-nav: 0 -14px 30px -22px rgba(46, 58, 50, 0.5);
   --hg-shadow-sheet: 0 -20px 50px -24px rgba(31, 42, 34, 0.5);
+  /* Beet: feine Lichtkante oben, damit die Fläche eingelassen wirkt */
+  --hg-shadow-bed: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   --hg-shadow-primary: 0 16px 30px -16px rgba(124, 152, 133, 0.95);
   --hg-shadow-accent: 0 16px 30px -12px rgba(208, 140, 96, 0.95);
   --hg-scrim: rgba(31, 42, 34, 0.34);
 
   /* Radien: 16–24px, Sheets und Beet etwas runder */
+  /* Nur für sehr kleine Flächen wie die Heatmap-Zellen */
+  --hg-radius-xs: 4px;
   --hg-radius-sm: 14px;
   --hg-radius-md: 16px;
   --hg-radius-lg: 20px;
@@ -82,8 +96,17 @@
   --hg-duration-slow: 420ms;
 }
 
-/* Vorbereitet, noch nicht ausgebaut. */
+/*
+ * Hier stehen absichtlich nur die Tokens, die sich ändern.
+ * Ohne dunkle Variante bleiben: Radien, Kurven und Dauern (rein geometrisch),
+ * die Erdfarben samt Samen und Schatten (Erde ist Erde), --hg-on-accent
+ * (Terrakotta bleibt gleich, die Schrift darauf also auch) sowie die beiden
+ * farbigen Glows --hg-shadow-primary und --hg-shadow-accent.
+ */
 [data-theme='dark'] {
+  /* Färbt Scrollbalken, Formularelemente und die Auswahlfarbe mit um. */
+  color-scheme: dark;
+
   --hg-canvas: #1b241e;
   --hg-surface: #243029;
   --hg-bed: #202b23;
@@ -118,6 +141,7 @@
   --hg-shadow-lifted: 0 22px 50px -30px rgba(0, 0, 0, 0.75);
   --hg-shadow-nav: 0 -14px 30px -22px rgba(0, 0, 0, 0.6);
   --hg-shadow-sheet: 0 -20px 50px -24px rgba(0, 0, 0, 0.7);
+  --hg-shadow-bed: inset 0 1px 0 rgba(232, 239, 231, 0.06);
   --hg-scrim: rgba(8, 14, 10, 0.52);
 }
 
@@ -143,6 +167,7 @@
   --color-ink: var(--hg-text);
   --color-muted: var(--hg-muted);
   --color-on-primary: var(--hg-on-primary);
+  --color-on-accent: var(--hg-on-accent);
 
   --color-healthy: var(--hg-healthy);
   --color-thirsty: var(--hg-thirsty);
@@ -155,6 +180,11 @@
   --color-hairline: var(--hg-hairline);
   --color-scrim: var(--hg-scrim);
 
+  --color-heat-full: var(--hg-heat-full);
+  --color-heat-partial: var(--hg-heat-partial);
+  --color-heat-empty: var(--hg-heat-empty);
+
+  --radius-xs: var(--hg-radius-xs);
   --radius-sm: var(--hg-radius-sm);
   --radius-md: var(--hg-radius-md);
   --radius-lg: var(--hg-radius-lg);
@@ -168,6 +198,7 @@
   --shadow-lifted: var(--hg-shadow-lifted);
   --shadow-nav: var(--hg-shadow-nav);
   --shadow-sheet: var(--hg-shadow-sheet);
+  --shadow-bed: var(--hg-shadow-bed);
   --shadow-primary: var(--hg-shadow-primary);
   --shadow-accent: var(--hg-shadow-accent);
 
@@ -334,6 +365,14 @@
 /* Bottom Tab Bar: eigener Abstand plus Home-Indicator */
 @utility pb-safe-nav {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing) * 6);
+}
+/* Fuß eines Sheets oder Vollbild-Flows: eigener Abstand plus Home-Indicator */
+@utility pb-safe-sheet {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing) * 7.5);
+}
+/* FAB: bleibt auf jedem Gerät über der Tab Bar */
+@utility bottom-safe-fab {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing) * 24);
 }
 @utility min-h-svh-safe {
   min-height: 100svh;

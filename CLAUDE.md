@@ -30,8 +30,11 @@ Regeln:
   Der Eintrag `src="/src/main.tsx"` ist die Vite-Konvention und wird beim Build
   korrekt umgeschrieben.
 - `workbox.navigateFallback` muss ebenfalls den Base-Path enthalten.
-- `theme_color` steht an zwei Stellen (`vite.config.ts` und `index.html`) und
-  muss dort gleich bleiben.
+- `theme_color` steht an **drei** Stellen: `vite.config.ts` (Manifest),
+  `index.html` (Meta-Tag, helle Variante) und `src/config/theme.ts`
+  (`THEME_COLOR`, beide Varianten für den Dark Mode). Die helle Farbe muss
+  überall gleich sein. `src/lib/theme.test.ts` sichert den Abgleich zwischen
+  `index.html` und `src/config/theme.ts` ab.
 
 Nach dem ersten Deployment einmalig in GitHub: **Settings → Pages → Source →
 GitHub Actions**. Das lässt sich nicht aus dem Repo heraus setzen.
@@ -70,26 +73,56 @@ npm run icons       # Favicon und PWA-Icons neu erzeugen
 
 ```
 src/
-  config/growth.ts    Alle Konstanten der Wachstumsregeln
-  config/species.ts   Kategorien und Arten
-  db/db.ts            Dexie-Schema
-  db/plants.ts        Repository: anlegen, gießen, bearbeiten, ausgraben
-  i18n/de.ts          Alle sichtbaren Texte
-  i18n/index.ts       t() und tCount()
-  lib/time.ts         Kalendertag-Arithmetik
-  lib/growth.ts       Wachstums- und Verwelklogik (UI-frei)
-  types.ts            Datenmodell und abgeleitete Typen
-scripts/              Icon-Generierung
-external/             Design-Prototyp (nicht im Git)
-thoughts/             Planungsnotizen (nicht im Git)
+  config/growth.ts        Alle Konstanten der Wachstumsregeln
+  config/species.ts       Kategorien, Arten und ihre Farben
+  config/plant-visuals.ts Leinwand, Wachstumsfaktoren, HEALTH_RENDER, Größen
+  config/tabs.ts          TabId und Reihenfolge
+  config/rhythms.ts       Rhythmus-Presets
+  config/greeting.ts      Stundengrenzen des Tagesgrußes
+  config/heatmap.ts       Fenstergröße der Heatmap
+  config/theme.ts         Theme-Präferenzen, Speicherschlüssel, Theme-Farben
+  config/settings.ts      Grenzen der Einstellungen
+  db/db.ts                Dexie-Schema (Version 2)
+  db/plants.ts            Repository: anlegen, gießen, bearbeiten, ausgraben,
+                          importieren
+  db/settings.ts          Repository der Garten-Einstellungen
+  i18n/de.ts              Alle sichtbaren Texte
+  i18n/index.ts           t() und tCount()
+  i18n/labels.ts          Beschriftungen aus Daten (Stufe, Zustand, Rhythmus)
+  lib/time.ts             Kalendertag-Arithmetik
+  lib/growth.ts           Wachstums- und Verwelklogik (UI-frei)
+  lib/heatmap.ts          Acht Wochen Historie (UI-frei)
+  lib/greeting.ts         Tageszeit (UI-frei)
+  lib/backup.ts           Export erzeugen, Import validieren (UI-frei)
+  lib/theme.ts            Theme-Auflösung (UI-frei)
+  hooks/useNow.ts         Zeitbezug ohne Timer
+  hooks/usePlants.ts      useLiveQuery + derivePlants
+  hooks/useSettings.ts    Einstellungen live aus IndexedDB
+  hooks/useTheme.ts       localStorage, matchMedia, Attribut auf <html>
+  components/             Geteilte UI: TabBar, BottomSheet, Buttons, Icons
+  components/plant/       Die prozedurale Pflanzen-Illustration
+  screens/garden/         Garten
+  screens/today/          Heute
+  screens/detail/         Detail-Sheet inkl. Bearbeiten und Heatmap
+  screens/create/         Anpflanz-Flow
+  screens/onboarding/     Begrüßung beim ersten Start
+  screens/settings/       Einstellungen inkl. Darstellung und Name
+  globals.d.ts            __APP_VERSION__ (kommt aus vite.config.ts)
+  types.ts                Datenmodell und abgeleitete Typen
+scripts/                  Icon-Generierung
+external/                 Design-Prototyp (nicht im Git)
+thoughts/                 Planungsnotizen (nicht im Git)
+learnings/                Lokale Notizen (nicht im Git)
 ```
 
 ---
 
 ## Datenmodell
 
-Persistiert in IndexedDB (`habit-garden`, Store `plants`, Version 1,
-Index `id, createdAt, status, lastWateredAt, category`):
+Persistiert in IndexedDB (`habit-garden`, **Version 2**). Zwei Stores:
+`plants` mit dem Index `id, createdAt, status, lastWateredAt, category` und
+`settings` mit `id`. Frühere Versionen bleiben in `src/db/db.ts` deklariert,
+sonst kann Dexie einen bestehenden Garten nicht hochziehen.
 
 ```ts
 interface Plant {
@@ -116,6 +149,24 @@ aus Zeitstempeln erkannt werden. `derivePlantState()` berechnet den effektiven
 Status; `reconcileStatus()` schreibt ein erkanntes `dead` zurück, damit es
 abfragbar ist. **Einmal `dead` bleibt `dead`** — sonst würde ein späteres
 Verlängern des Intervalls im Bearbeiten-Flow eine tote Pflanze wiederbeleben.
+
+### Einstellungen
+
+Genau eine Zeile im Store `settings`, feste id `'app'` — es gibt nur ein Set,
+das rechtfertigt kein Key-Value-Schema:
+
+```ts
+interface GardenSettings {
+  id: string
+  gardenerName: string      // leer = beim Start übersprungen
+  onboardedAt: number | null // null = Begrüßung noch nie beantwortet
+}
+```
+
+`getSettings()` liefert immer ein Objekt, auch wenn noch nie etwas gespeichert
+wurde. Ob die Begrüßung fällig ist, entscheidet allein `onboardedAt`.
+
+**Das Theme steht bewusst nicht hier** — siehe den Abschnitt Dark Mode.
 
 ---
 
@@ -233,19 +284,55 @@ Farben, Radien, Schatten oder Kurven direkt in Komponenten.**
 | Sekundär (staubiges Blau) | `#8FA9BF` | `#8FA9BF` |
 
 Radien 16–24 px (Sheets 30, Beet 26). Weiche Schatten statt Borders, viel
-Weißraum.
+Weißraum. Ausnahme nach unten: `--hg-radius-xs` mit 4 px, ausschließlich für die
+Heatmap-Zellen.
 
-Dark Mode ist als `[data-theme="dark"]`-Block **vorbereitet, aber nicht
-aktiviert** — kein `prefers-color-scheme`, kein Umschalter. Zum Ausbauen reicht
-das Attribut auf `<html>`. Damit das zur Laufzeit wirkt, ist `@theme inline`
-Pflicht: nur so referenzieren die Utilities die Variable statt ihren Wert zu
-kopieren.
+Ergänzend zur Tabelle gibt es Tokens, die nur die Illustration und einzelne
+Flächen brauchen: `--hg-soil`, `--hg-soil-dry`, `--hg-soil-highlight`,
+`--hg-seed`, `--hg-seed-sheen`, `--hg-plant-shadow`, `--hg-on-accent`,
+`--hg-shadow-bed` und die drei `--hg-heat-*`. **Auch dafür
+gilt: keine Farbe direkt in einer Komponente.** Die einzige Ausnahme sind die
+Pflanzenfarben je Art — die stehen geschlossen in `src/config/species.ts`, weil
+sie zur Art gehören und nicht zum Theme.
+
+### Dark Mode
+
+Aktiv, steuerbar über **System / Hell / Dunkel** in den Einstellungen, Standard
+„System". Drei Regeln, an denen sich nicht rütteln lässt:
+
+1. **`data-theme` auf `<html>` trägt immer den aufgelösten Wert** — `light` oder
+   `dark`, **nie** `system`. Aufgelöst wird in JavaScript über `matchMedia`.
+   Deshalb steht in `src/index.css` bewusst **kein**
+   `@media (prefers-color-scheme)`: das wäre eine zweite Kopie der kompletten
+   Palette, und zwei Kopien driften.
+2. **`@theme inline` ist Pflicht.** Nur so referenzieren die Utilities die
+   Variable, statt ihren Wert zu kopieren — sonst wirkt der Wechsel zur Laufzeit
+   nicht.
+3. **Das Inline-Skript in `index.html` setzt das Attribut vor dem ersten
+   Paint.** Ein React-Effekt liefe erst danach, die App würde hell aufblitzen.
+   Das Skript dupliziert notgedrungen drei Werte aus `src/config/theme.ts`
+   (Speicherschlüssel, Media Query, die beiden Canvas-Farben), weil es vor dem
+   Bundle läuft und nichts importieren kann. `src/lib/theme.test.ts` vergleicht
+   beide Stellen und prüft zusätzlich, dass das Skript **vor** dem Modul-Tag
+   steht.
+
+Die Präferenz liegt in **localStorage**, nicht in IndexedDB: sie muss synchron
+vor dem Paint lesbar sein und gehört zum Gerät, nicht zum Garten — deshalb steht
+sie auch nicht in der Sicherung.
+
+Im `[data-theme='dark']`-Block stehen nur die Tokens, die sich ändern. Ohne
+dunkle Variante bleiben Radien, Kurven, Dauern, die Erdfarben, `--hg-on-accent`
+und die beiden farbigen Glows. Das ist Absicht und oben im Block vermerkt.
 
 ### Safe-Area-Insets
 
 Nur über die Utilities `pt-safe`, `pb-safe`, `pl-safe`, `pr-safe`,
-`pb-safe-nav`, `min-h-svh-safe`. Nie `env(safe-area-inset-*)` in Komponenten.
-`index.html` braucht dafür `viewport-fit=cover`.
+`pb-safe-nav`, `pb-safe-sheet`, `bottom-safe-fab`, `min-h-svh-safe`. Nie
+`env(safe-area-inset-*)` in Komponenten. `index.html` braucht dafür
+`viewport-fit=cover`.
+
+`pb-safe-nav` gehört an die Tab Bar, `pb-safe-sheet` an den Fuß von Sheets und
+Vollbild-Flows, `bottom-safe-fab` hält den FAB auf jedem Gerät über der Tab Bar.
 
 ### Animationen
 
@@ -268,7 +355,10 @@ Keyframes aus dem Prototyp, als Tailwind-Utilities verfügbar:
 ## Pflanzen-Illustrationen
 
 React-SVG-Komponenten, flacher weicher Stil, **keine Emojis**. Eine Komponente
-`<Plant species growthStage health />`.
+`<Plant species growthStage healthState size showDropHint celebrate />` in
+`src/components/plant/`. Sie ist rein dekorativ (`aria-hidden`) — den Namen
+liefert immer das umgebende Element. Größen kommen aus `PLANT_SIZE` in
+`src/config/plant-visuals.ts`, nie als lose Zahl aus einem Screen.
 
 Die Bauanleitung stammt aus dem Prototyp und ist prozedural — Stufe und
 Gesundheit sind zwei unabhängige Achsen, keine 15 gezeichneten Varianten:
@@ -311,13 +401,23 @@ Texte stehen in `src/i18n/de.ts`, Zugriff über den typsicheren Helper:
 
 ```ts
 t('tabs.garden')
-t('shell.seedingBody')
+t('detail.subtitle', { species, rhythm })
 tCount('garden.needsWater', dueCount)   // zero / one / other, {count} automatisch
 ```
 
 Neue Texte immer zuerst in `de.ts` ergänzen. Die Schlüssel sind typgeprüft, ein
 Tippfehler fällt beim Typecheck auf. Ein Eintrag mit `zero`/`one`/`other` ist
 eine Pluralform und wird über `tCount()` gelesen.
+
+Template-Literale funktionieren, solange alle Varianten existieren — etwa
+``t(`health.${state}`)`` oder ``t(`tabs.${tab}`)``. Das prüft der Typechecker
+mit. Nur `species.<id>.name` braucht eine Zusicherung, weil `Plant.species` im
+Datenmodell ein freier String ist; `t()` fällt dort sichtbar auf den Schlüssel
+zurück und warnt im Dev-Modus.
+
+Beschriftungen, die aus Daten entstehen, stehen gesammelt in
+`src/i18n/labels.ts`: `stageLabel()`, `healthLabel()`, `categoryName()`,
+`speciesName()`, `rhythmLabel()`. Nicht in den Screens nachbauen.
 
 ---
 
@@ -334,11 +434,68 @@ Navigation über eine Bottom Tab Bar: Garten / Heute / Einstellungen.
    „Gießen"-Button (deaktiviert wenn nicht fällig), Heatmap der letzten
    8 Wochen, Menü zum Bearbeiten/Ausgraben.
 4. **Heute** — Liste der fälligen Gewohnheiten, erledigte klappen weg.
-5. **Einstellungen** — Export/Import als JSON-Datei (wichtig, da die Daten nur
-   lokal liegen), Über die App.
+5. **Einstellungen** — Darstellung (System / Hell / Dunkel), Name,
+   Export/Import als JSON-Datei (wichtig, da die Daten nur lokal liegen),
+   Über die App.
 
-Stand: Phase 1 abgeschlossen (Fundament + Deployment). Die Screens folgen
-einzeln.
+Davor liegt ein Screen ohne Tab: die **Begrüßung beim ersten Start**. Sie fragt
+nach dem Namen, lässt sich überspringen und erscheint nur, solange
+`onboardedAt` null ist. Der Garten grüßt danach mit Namen
+(`garden.greetingNamed.*`) oder ohne (`garden.greeting.*`) — zwei getrennte
+Textfassungen, damit ohne Namen kein Komma übrig bleibt.
+
+Kein Router: der aktive Tab und alle Overlays sind State in `src/App.tsx`.
+Overlays liegen gestaffelt über der Shell — Detail-Sheet `z-20`, Anpflanzen
+`z-30`, Bestätigung `z-40`, FAB darunter auf `z-10`.
+
+### Zeitbezug in der UI
+
+`useNow()` liefert den Zeitpunkt, aus dem alle Screens ihre Zustände ableiten,
+und wird über `visibilitychange` und `focus` neu gelesen — **kein
+`setInterval`**. Der Wert wird einmal in `App` geholt und nach unten gereicht,
+damit nicht zwei Teile der App verschiedene Tage sehen.
+
+### Heatmap
+
+`src/lib/heatmap.ts` rekonstruiert für jeden der letzten 56 Kalendertage, wie
+die Pflanze an dem Tag dastand — bewertet mit derselben `missedIntervalsFor()`,
+die auch Gesundheit und Streak bestimmt.
+
+| Zustand | Bedingung | Farbe |
+| --- | --- | --- |
+| `watered` | an dem Tag wurde gegossen | `--hg-heat-full` |
+| `idle` | nichts fällig oder noch in der Karenz | `--hg-heat-partial` |
+| `missed` | über die Karenz hinaus fällig, nicht gegossen | `--hg-heat-empty` |
+| `before` | Tag liegt vor dem Anpflanzen | transparent |
+
+Die Quote darüber ist der Anteil der Tage seit dem Anpflanzen, an denen die
+Pflanze **versorgt** war (`watered` oder `idle`) — nicht der Anteil erledigter
+Gießtermine. Sonst würde ein einzelnes verpasstes Intervall mehrfach zählen,
+einmal pro überfälligem Tag.
+
+Das Raster ist spaltenweise gefüllt, sieben Zeilen, letzte Zelle ist heute. Die
+Spalten sind bewusst **nicht** auf Wochentage ausgerichtet.
+
+### Sicherung
+
+`src/lib/backup.ts` erzeugt und prüft die JSON-Datei, geschrieben wird über
+`importPlants()` in `src/db/plants.ts`. Zwei Regeln:
+
+- **Zusammenführen statt ersetzen** (`bulkPut` über die `id`). Ein Import
+  löscht nie etwas, und dieselbe Datei zweimal einzulesen ändert nichts.
+- **Die Kategorie kommt aus der Artdefinition**, nicht aus der Datei — sonst
+  könnte eine manipulierte Sicherung eine Eiche als Kraut wachsen lassen.
+  Unbekannte Arten werden übersprungen und gezählt, ein kaputter Datensatz
+  kippt nicht den ganzen Import.
+
+Die Datei enthält neben `plants` ein optionales `settings` mit dem Namen.
+Optional heißt: ältere Sicherungen ohne das Feld lesen weiterhin sauber, und
+`version` bleibt bei 1. Ein leerer Name in der Datei überschreibt einen
+vorhandenen **nicht**.
+
+Stand: Phase 3 abgeschlossen. Alle fünf Screens sind bedienbar, dazu Dark Mode
+und die Begrüßung beim ersten Start. Anpflanzen, gießen, bearbeiten, ausgraben,
+exportieren und importieren funktionieren.
 
 ---
 

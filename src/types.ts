@@ -38,6 +38,21 @@ export interface Plant {
   status: PlantStatus
 }
 
+/**
+ * Einstellungen des Gartens. Genau eine Zeile mit fester id — es gibt nur ein
+ * Set, deshalb kein Key-Value-Schema.
+ *
+ * Das Theme steht bewusst NICHT hier, sondern in localStorage: es muss vor dem
+ * ersten Paint synchron lesbar sein und gehört zum Gerät, nicht zum Garten.
+ */
+export interface GardenSettings {
+  id: string
+  /** Leer, wenn beim Start übersprungen wurde. */
+  gardenerName: string
+  /** Wann die Begrüßung beantwortet wurde. `null` = noch nie gezeigt. */
+  onboardedAt: number | null
+}
+
 /** Felder, die zum Anpflanzen nötig sind. Alles andere setzt die Datenschicht. */
 export interface NewPlantInput {
   category: PlantCategory

@@ -13,8 +13,9 @@ dev-dist
 .DS_Store
 *.swp
 
-# Lokale Planungsnotizen
+# Lokale Notizen und Design-Prototyp
 thoughts/
+learnings/
 external/
 
 # Logs
