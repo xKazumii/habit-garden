@@ -12,14 +12,14 @@ import {
 import { resolveTheme, toThemePreference } from '../lib/theme'
 
 /**
- * Theme-Steuerung: liest die Präferenz aus localStorage, hört auf die
- * Systemeinstellung und schreibt das Ergebnis auf `<html>`.
+ * Theme control: reads the preference from localStorage, listens to the system
+ * setting and writes the result onto `<html>`.
  *
- * Das Attribut steht beim ersten Paint bereits — gesetzt vom Inline-Skript in
- * index.html. Dieser Hook übernimmt danach und hält es aktuell.
+ * The attribute is already in place at first paint — set by the inline script in
+ * index.html. This hook takes over afterwards and keeps it current.
  *
- * localStorage kann werfen (Safari im privaten Modus). Beide Zugriffe sind
- * deshalb abgesichert; im Zweifel gilt „System".
+ * localStorage can throw (Safari in private mode). Both accesses are guarded; in
+ * doubt "system" applies.
  */
 
 const readPreference = (): ThemePreference => {
@@ -34,7 +34,7 @@ const writePreference = (preference: ThemePreference): void => {
   try {
     localStorage.setItem(THEME_STORAGE_KEY, preference)
   } catch {
-    /* Ohne Speicher gilt die Wahl nur für diese Sitzung. */
+    /* Without storage the choice only holds for this session. */
   }
 }
 
@@ -50,7 +50,7 @@ export const useTheme = (): ThemeControl => {
   const [preference, setPreferenceState] = useState<ThemePreference>(readPreference)
   const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(prefersDark)
 
-  // Nur relevant, solange „System" gewählt ist — der Listener kostet aber nichts.
+  // Only relevant while "system" is selected, but the listener costs nothing.
   useEffect(() => {
     const query = window.matchMedia(DARK_MEDIA_QUERY)
     const onChange = (event: MediaQueryListEvent) => setSystemPrefersDark(event.matches)

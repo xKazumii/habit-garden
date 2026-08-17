@@ -2,19 +2,19 @@ import { de } from './de'
 
 type Messages = typeof de
 
-/** Ein Eintrag mit diesen Schlüsseln wird über `tCount()` gelesen. */
+/** An entry with these keys is read via `tCount()`. */
 interface PluralForms {
   zero?: string
   one: string
   other: string
 }
 
-/** Alle Pfade, die auf einen Text zeigen — z. B. 'tabs.garden'. */
+/** Every path that points at a string — e.g. 'tabs.garden'. */
 type LeafKeys<T> = {
   [K in keyof T & string]: T[K] extends string ? K : `${K}.${LeafKeys<T[K]>}`
 }[keyof T & string]
 
-/** Alle Pfade, die auf eine Pluralform zeigen — z. B. 'garden.needsWater'. */
+/** Every path that points at a plural form — e.g. 'garden.needsWater'. */
 type PluralKeys<T> = {
   [K in keyof T & string]: T[K] extends string
     ? never
@@ -48,9 +48,9 @@ const isPluralForms = (value: unknown): value is PluralForms =>
   typeof (value as Partial<PluralForms>).one === 'string' &&
   typeof (value as Partial<PluralForms>).other === 'string'
 
-/** Fällt sichtbar auf den Schlüssel zurück, statt eine leere Stelle zu zeigen. */
+/** Visibly falls back to the key instead of rendering a blank. */
 const fallback = (key: string): string => {
-  if (import.meta.env.DEV) console.warn(`[i18n] Kein Text für "${key}"`)
+  if (import.meta.env.DEV) console.warn(`[i18n] No string for "${key}"`)
   return key
 }
 
@@ -61,8 +61,8 @@ export const t = (key: MessageKey, replacements?: Replacements): string => {
 }
 
 /**
- * Pluralform passend zur Anzahl. `count` steht im Text automatisch als
- * Platzhalter `{count}` zur Verfügung.
+ * Plural form matching the count. `count` is automatically available inside the
+ * string as the `{count}` placeholder.
  */
 export const tCount = (key: PluralKey, count: number, replacements: Replacements = {}): string => {
   const forms = lookup(key)

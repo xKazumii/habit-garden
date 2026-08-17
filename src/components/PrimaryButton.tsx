@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 
 /**
- * Der große Aktionsbutton am Fuß eines Flows oder Sheets.
- * Deaktiviert wird er nicht ausgegraut, sondern nimmt die Inaktiv-Fläche an —
- * das liest sich ruhiger als eine halbdurchsichtige Version.
+ * The large action button at the foot of a flow or sheet.
+ * When disabled it is not greyed out but takes on the inactive surface — that
+ * reads calmer than a semi-transparent version.
  */
 
 interface PrimaryButtonProps {

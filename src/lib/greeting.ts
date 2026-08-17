@@ -1,9 +1,9 @@
 import { EVENING_FROM_HOUR, MORNING_UNTIL_HOUR } from '../config/greeting'
 
 /**
- * Tageszeit für den Gruß im Garten. Wie überall in dieser App bekommt die
- * Funktion `now` übergeben, statt selbst auf die Uhr zu sehen — dadurch
- * testbar ohne Zeitreise.
+ * Time of day for the greeting in the garden. As everywhere in this app the
+ * function receives `now` instead of looking at the clock itself — which makes it
+ * testable without time travel.
  */
 export type Daytime = 'morning' | 'day' | 'evening'
 

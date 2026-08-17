@@ -1,7 +1,7 @@
 /**
- * Zur Bauzeit eingesetzte Konstanten.
- * Belegt werden sie in vite.config.ts unter `define`.
+ * Constants injected at build time.
+ * They are populated in vite.config.ts under `define`.
  */
 
-/** Version aus der package.json. */
+/** Version from package.json. */
 declare const __APP_VERSION__: string

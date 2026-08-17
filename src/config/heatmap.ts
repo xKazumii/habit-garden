@@ -1,6 +1,6 @@
 /**
- * Heatmap im Detail-Sheet: acht Wochen zu sieben Tagen, spaltenweise gefüllt.
- * Die letzte Zelle ist immer heute.
+ * Heatmap in the detail sheet: eight weeks of seven days, filled column by
+ * column. The last cell is always today.
  */
 export const HEATMAP_WEEKS = 8
 export const DAYS_PER_WEEK = 7

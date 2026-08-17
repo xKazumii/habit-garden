@@ -7,17 +7,17 @@ import { MAX_GARDENER_NAME_LENGTH } from '../../config/settings'
 import { t } from '../../i18n'
 
 /**
- * Der erste Start. Fragt nach dem Namen und lässt sich überspringen —
- * die App braucht ihn nicht, sie grüßt dann eben ohne.
+ * The first start. Asks for a name and can be skipped — the app does not need
+ * one, it simply greets without it.
  *
- * Wird nur gezeigt, solange `onboardedAt` null ist. Danach führt der Weg über
- * die Einstellungen.
+ * Shown only while `onboardedAt` is null. After that the route is through the
+ * settings.
  */
 
 const ENTER_KEY = 'Enter'
 
 interface WelcomeScreenProps {
-  /** Leerer Name bedeutet „übersprungen". */
+  /** An empty name means "skipped". */
   onDone: (name: string) => void
 }
 

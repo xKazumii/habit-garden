@@ -1,30 +1,30 @@
 /**
- * Kalendertag-Arithmetik.
+ * Calendar-day arithmetic.
  *
- * Die gesamte Fälligkeit der App rechnet in *lokalen Kalendertagen*, nicht in
- * 24-Stunden-Schritten. "Täglich" heißt einmal pro Kalendertag: wer um 23:50
- * gießt, darf am nächsten Morgen wieder gießen. Bei 24h-Arithmetik würde die
- * Fälligkeit mit jedem späten Gießen nach hinten wandern.
+ * All due-date logic in this app counts *local calendar days*, not 24-hour
+ * steps. "Daily" means once per calendar day: water at 23:50 and you may water
+ * again the next morning. With 24-hour arithmetic the due time would drift
+ * later with every late watering.
  *
- * Zeitstempel werden weiterhin als Epoch-Millisekunden gespeichert. Verglichen
- * wird ausschließlich über `dayNumber()`.
+ * Timestamps are still stored as epoch milliseconds. Comparisons go exclusively
+ * through `dayNumber()`.
  */
 
 const MS_PER_DAY = 86_400_000
 
 /**
- * Fortlaufende Nummer des lokalen Kalendertags.
+ * Running number of the local calendar day.
  *
- * Bewusst über die lokalen Kalenderfelder und `Date.UTC` — nicht über
- * `timestamp / MS_PER_DAY`. Dadurch ist die Funktion sommerzeitsicher: ein Tag
- * mit 23 oder 25 Stunden zählt trotzdem als genau ein Tag.
+ * Deliberately built from the local calendar fields and `Date.UTC` rather than
+ * `timestamp / MS_PER_DAY`. That makes it DST-safe: a day with 23 or 25 hours
+ * still counts as exactly one day.
  */
 export const dayNumber = (timestamp: number): number => {
   const date = new Date(timestamp)
   return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / MS_PER_DAY)
 }
 
-/** Lokale Mitternacht des Tages, in dem `timestamp` liegt. */
+/** Local midnight of the day that `timestamp` falls in. */
 export const startOfLocalDay = (timestamp: number): number => {
   const date = new Date(timestamp)
   date.setHours(0, 0, 0, 0)
@@ -32,8 +32,8 @@ export const startOfLocalDay = (timestamp: number): number => {
 }
 
 /**
- * Lokale Mitternacht `days` Kalendertage nach dem Tag von `timestamp`.
- * Rechnet über `setDate`, also über Kalenderfelder statt über Millisekunden.
+ * Local midnight `days` calendar days after the day of `timestamp`.
+ * Computed via `setDate`, i.e. through calendar fields rather than milliseconds.
  */
 export const startOfLocalDayPlus = (timestamp: number, days: number): number => {
   const date = new Date(timestamp)
@@ -42,7 +42,7 @@ export const startOfLocalDayPlus = (timestamp: number, days: number): number => 
   return date.getTime()
 }
 
-/** Ganze Kalendertage von `from` bis `to`. Negativ, wenn `to` früher liegt. */
+/** Whole calendar days from `from` to `to`. Negative if `to` is earlier. */
 export const daysBetween = (from: number, to: number): number => dayNumber(to) - dayNumber(from)
 
 export const isSameLocalDay = (a: number, b: number): boolean => dayNumber(a) === dayNumber(b)

@@ -1,8 +1,8 @@
 /**
- * Die drei Tabs. Bewusst kein Router: die Navigation läuft über State, damit
- * GitHub Pages keinen SPA-Fallback braucht.
+ * The three tabs. Deliberately no router: navigation runs through state so that
+ * GitHub Pages needs no SPA fallback.
  *
- * Die Beschriftungen stehen in src/i18n/de.ts unter `tabs.<id>`.
+ * The labels live in src/i18n/de.ts under `tabs.<id>`.
  */
 export type TabId = 'garden' | 'today' | 'settings'
 

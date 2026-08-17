@@ -1,13 +1,13 @@
 /**
- * Wachstums- und Verwelklogik. Der Kern der App.
+ * Growth and wilting logic. The core of the app.
  *
- * Bewusst frei von UI-, DOM- und Datenbank-Abhängigkeiten und komplett
- * deterministisch: jede Funktion bekommt `now` übergeben.
+ * Deliberately free of UI, DOM and database dependencies, and fully
+ * deterministic: every function receives `now`.
  *
- * Der wichtigste Grundsatz: **es gibt keine Timer.** Gesundheit, Stufe, Streak
- * und Status werden immer aus den gespeicherten Zeitstempeln berechnet. Eine App,
- * die drei Wochen geschlossen war, ergibt beim Öffnen genau denselben Zustand wie
- * eine, die durchgehend offen stand.
+ * The guiding rule: **there are no timers.** Health, stage, streak and status
+ * are always derived from the stored timestamps. An app that was closed for
+ * three weeks yields exactly the same state on opening as one that stayed open
+ * the whole time.
  */
 
 import {
@@ -35,20 +35,20 @@ import { dayNumber, startOfLocalDayPlus } from './time'
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value))
 
-/** Schützt die Division in `missedIntervalsFor` gegen kaputte Daten. */
+/** Guards the division in `missedIntervalsFor` against corrupt data. */
 export const safeIntervalDays = (intervalDays: number): number =>
   Number.isFinite(intervalDays) ? Math.max(MIN_INTERVAL_DAYS, Math.trunc(intervalDays)) : MIN_INTERVAL_DAYS
 
 /**
- * Wie viele Intervalle sind verpasst, wenn eine Pflanze `daysOverdue` Kalendertage
- * über ihrem Fälligkeitstag liegt?
+ * How many intervals were missed when a plant is `daysOverdue` calendar days
+ * past its due day?
  *
- * Während der Karenz 0 — die Pflanze ist dann "durstig", aber bei voller
- * Gesundheit. Erst danach zählt jedes weitere Intervall.
+ * Zero during the grace period — the plant is "thirsty" then, but at full
+ * health. Only afterwards does every further interval count.
  *
- * Dieselbe Funktion bewertet auch vergangene Gießabstände beim Streak. Dadurch
- * können Gesundheit und Streak nicht auseinanderlaufen: genau der Abstand, der
- * Gesundheit kostet, kostet auch den Streak.
+ * The same function also judges past watering gaps for the streak. That way
+ * health and streak cannot drift apart: exactly the gap that costs health also
+ * costs the streak.
  */
 export const missedIntervalsFor = (daysOverdue: number, intervalDays: number): number => {
   if (daysOverdue < 0) return 0
@@ -57,7 +57,7 @@ export const missedIntervalsFor = (daysOverdue: number, intervalDays: number): n
   return Math.max(0, intervalsOverdue - GRACE_INTERVALS + 1)
 }
 
-/** Punkte, die eine Stufe dieser Kategorie kostet. */
+/** Points one stage costs for this category. */
 export const pointsPerStageFor = (category: PlantCategory): number => POINTS_PER_STAGE[category]
 
 export const growthStageFor = (category: PlantCategory, growthPoints: number): GrowthStage => {
@@ -67,29 +67,29 @@ export const growthStageFor = (category: PlantCategory, growthPoints: number): G
 }
 
 /**
- * Kalendertag, ab dem gegossen werden darf.
- * Eine frisch gepflanzte Pflanze (`lastWateredAt === null`) ist sofort fällig.
+ * The calendar day from which watering is allowed.
+ * A freshly planted plant (`lastWateredAt === null`) is due immediately.
  */
 const dueDayNumber = (plant: Plant, intervalDays: number): number =>
   plant.lastWateredAt === null
     ? dayNumber(plant.createdAt)
     : dayNumber(plant.lastWateredAt) + intervalDays
 
-/** Zeitstempel der lokalen Mitternacht des Fälligkeitstags — nur zur Anzeige. */
+/** Timestamp of local midnight on the due day — for display only. */
 const dueAtFor = (plant: Plant, intervalDays: number): number =>
   plant.lastWateredAt === null
     ? startOfLocalDayPlus(plant.createdAt, 0)
     : startOfLocalDayPlus(plant.lastWateredAt, intervalDays)
 
 /**
- * Aufeinanderfolgende Intervalle ohne Verpassen.
+ * Consecutive intervals without a miss.
  *
- * Zwei Abbruchbedingungen:
- *  - die Pflanze hängt *aktuell* über der Karenz (oder ist eingegangen) → 0
- *  - im Verlauf liegt ein Abstand, der über die Karenz hinausging
+ * Two ways it ends:
+ *  - the plant is *currently* past the grace period (or dead) → 0
+ *  - somewhere in the history a gap exceeded the grace period
  *
- * Damit gilt genau, was die Spec verlangt: das Gießen einer welken Pflanze
- * stellt die Gesundheit wieder her, kostet aber den Streak.
+ * This gives exactly what the spec asks for: watering a wilting plant restores
+ * its health but costs the streak.
  */
 const streakFrom = (
   waterings: readonly number[],
@@ -116,12 +116,12 @@ const streakFrom = (
 }
 
 /**
- * Präzedenz statt Schwellwert.
+ * Precedence instead of a threshold.
  *
- * Die Spec nennt "gesund (>66)", was mit den 25er-Schritten kollidiert: eine
- * Pflanze mit 75 wäre gleichzeitig gesund und ein Intervall überfällig. Deshalb
- * wird der Zustand hier über eine klare Reihenfolge bestimmt, die keine Lücke
- * lässt: eingegangen → welk → durstig → gesund.
+ * The spec says "healthy (>66)", which collides with the steps of 25: a plant
+ * at 75 would be healthy and one interval overdue at the same time. The state is
+ * therefore decided by a clear order that leaves no gap:
+ * dead → wilting → thirsty → healthy.
  */
 const healthStateFor = (status: PlantStatus, health: number, isDue: boolean): HealthState => {
   if (status === 'dead') return 'dead'
@@ -131,7 +131,7 @@ const healthStateFor = (status: PlantStatus, health: number, isDue: boolean): He
 }
 
 /**
- * Der komplette abgeleitete Zustand einer Pflanze. Nichts davon wird gespeichert.
+ * The complete derived state of a plant. None of it is persisted.
  */
 export const derivePlantState = (plant: Plant, now: number = Date.now()): PlantState => {
   const intervalDays = safeIntervalDays(plant.intervalDays)
@@ -148,9 +148,9 @@ export const derivePlantState = (plant: Plant, now: number = Date.now()): PlantS
   )
 
   /*
-   * `status` ist in der Datenbank absichtlich klebrig: einmal eingegangen,
-   * immer eingegangen. Sonst könnte ein späteres Verlängern des Intervalls im
-   * Bearbeiten-Flow eine tote Pflanze wiederbeleben.
+   * `status` is deliberately sticky in the database: once dead, always dead.
+   * Otherwise extending the interval later in the edit flow could revive a dead
+   * plant.
    */
   const isDead = plant.status === 'dead' || decayedHealth <= MIN_HEALTH
   const status: PlantStatus = isDead ? 'dead' : 'alive'
@@ -175,8 +175,8 @@ export const derivePlantState = (plant: Plant, now: number = Date.now()): PlantS
     missedIntervals,
     streak: streakFrom(plant.waterings, intervalDays, missedIntervals, status),
     dueAt: dueAtFor(plant, intervalDays),
-    // Bewusst als Differenz, nicht als `-daysOverdue`: das ergäbe bei genau
-    // heute fälligen Pflanzen -0.
+    // Deliberately a difference rather than `-daysOverdue`: the latter would
+    // yield -0 for plants that are due exactly today.
     daysUntilDue: dueDay - today,
     pointsIntoStage,
     pointsPerStage,
@@ -194,15 +194,15 @@ export const derivePlants = (
   now: number = Date.now(),
 ): DerivedPlant[] => plants.map((plant) => derivePlant(plant, now))
 
-/** Gießen erlaubt: die Pflanze lebt und ist fällig. */
+/** Watering allowed: the plant is alive and due. */
 export const canWater = (plant: Plant, now: number = Date.now()): boolean =>
   derivePlantState(plant, now).isDue
 
 /**
- * Gießt die Pflanze und gibt eine *neue* Pflanze zurück — kein Mutieren.
+ * Waters the plant and returns a *new* plant — no mutation.
  *
- * Höchstens einmal pro Intervall ergibt sich automatisch: der nächste
- * Fälligkeitstag folgt aus `lastWateredAt`, das hier neu gesetzt wird.
+ * "At most once per interval" falls out on its own: the next due day follows
+ * from `lastWateredAt`, which is set here.
  */
 export const water = (plant: Plant, now: number = Date.now()): WaterOutcome => {
   const state = derivePlantState(plant, now)
@@ -222,9 +222,9 @@ export const water = (plant: Plant, now: number = Date.now()): WaterOutcome => {
 }
 
 /**
- * Schreibt einen erkannten Tod in das persistierte Feld zurück.
- * Gibt dieselbe Referenz zurück, wenn sich nichts ändert — die Datenschicht
- * kann darauf prüfen und sich den Schreibvorgang sparen.
+ * Writes a detected death back into the persisted field.
+ * Returns the same reference when nothing changes — the data layer can check
+ * for that and skip the write.
  */
 export const reconcileStatus = (plant: Plant, now: number = Date.now()): Plant => {
   const { status } = derivePlantState(plant, now)

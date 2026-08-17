@@ -6,13 +6,13 @@ import { derivePlants } from '../lib/growth'
 import type { DerivedPlant } from '../types'
 
 /**
- * Alle Pflanzen samt abgeleitetem Zustand, live an IndexedDB gebunden.
+ * Every plant plus its derived state, bound live to IndexedDB.
  *
- * `now` kommt von außen, damit die ganze App denselben Zeitpunkt sieht — sonst
- * könnte der Garten einen Tageswechsel schon kennen und die Tab Bar noch nicht.
+ * `now` comes from outside so the whole app sees the same instant — otherwise the
+ * garden could already know about a day change while the tab bar does not.
  *
- * `undefined` bedeutet: die Datenbank hat noch nicht geantwortet. Das ist etwas
- * anderes als ein leerer Garten und wird in den Screens auch anders dargestellt.
+ * `undefined` means the database has not answered yet. That is different from an
+ * empty garden and the screens render it differently.
  */
 export const usePlants = (now: number): DerivedPlant[] | undefined => {
   const stored = useLiveQuery(() => listPlants(), [])

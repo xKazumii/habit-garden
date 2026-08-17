@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
 
 /**
- * Auswahl-Chip. Wird für Rhythmen verwendet — ausgewählt heißt gefüllt,
- * nicht umrandet.
+ * Selection chip. Used for rhythms — selected means filled, not outlined.
  */
 
 interface PillProps {

@@ -5,8 +5,8 @@ import { DoneSection } from './DoneSection'
 import { TodayRow } from './TodayRow'
 
 /**
- * „Heute": was jetzt Wasser braucht. Erledigtes klappt weg, Eingegangenes
- * taucht hier gar nicht auf — das gehört in den Garten, nicht auf die Liste.
+ * "Today": what needs water now. Done items fold away, dead plants do not appear
+ * here at all — those belong in the garden, not on the list.
  */
 
 interface TodayScreenProps {

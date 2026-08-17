@@ -2,8 +2,8 @@ import { t } from '../i18n'
 import { PlusIcon } from './icons'
 
 /**
- * Der Knopf zum Anpflanzen. Sitzt über der Tab Bar und liegt unter allen
- * Overlays, damit er im Detail-Sheet oder im Anpflanz-Flow nicht durchscheint.
+ * The planting button. Sits above the tab bar and below every overlay, so it does
+ * not shine through the detail sheet or the planting flow.
  */
 
 const ICON_SIZE = 26

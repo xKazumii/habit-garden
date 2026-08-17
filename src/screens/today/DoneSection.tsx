@@ -7,8 +7,8 @@ import { t } from '../../i18n'
 import type { DerivedPlant } from '../../types'
 
 /**
- * Was heute schon gegossen wurde. Klappt zu, damit „Heute" zeigt, was noch
- * offen ist — und nicht, was man bereits geschafft hat.
+ * What has already been watered today. Collapsed, so "Today" shows what is still
+ * open rather than what is already done.
  */
 
 const CHECK_ICON_SIZE = 18

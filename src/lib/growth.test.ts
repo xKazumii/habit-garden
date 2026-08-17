@@ -13,7 +13,7 @@ import {
 
 const HOUR_MS = 3_600_000
 
-/** Zeitstempel aus lokalen Kalenderfeldern. Monat 1-basiert, damit Tests lesbar bleiben. */
+/** Timestamp from local calendar fields. Month is 1-based to keep tests readable. */
 const local = (year: number, month: number, day: number, hour = 12, minute = 0): number =>
   new Date(year, month - 1, day, hour, minute, 0, 0).getTime()
 
@@ -44,7 +44,7 @@ const makePlant = (overrides: Partial<Plant> = {}): Plant => ({
   ...overrides,
 })
 
-/** Pflanze, die an aufeinanderfolgenden Tagen ab dem 1. Juni gegossen wurde. */
+/** A plant watered on consecutive days starting 1 June. */
 const wateredOnDays = (days: readonly number[], overrides: Partial<Plant> = {}): Plant => {
   const waterings = days.map((day) => local(2026, 6, day, 9))
   const last = waterings.at(-1)
@@ -58,7 +58,7 @@ const wateredOnDays = (days: readonly number[], overrides: Partial<Plant> = {}):
 }
 
 describe('growthStageFor', () => {
-  it('braucht bei Kräutern 3 Punkte pro Stufe', () => {
+  it('needs 3 points per stage for herbs', () => {
     expect(growthStageFor('herb', 0)).toBe(0)
     expect(growthStageFor('herb', 2)).toBe(0)
     expect(growthStageFor('herb', 3)).toBe(1)
@@ -66,7 +66,7 @@ describe('growthStageFor', () => {
     expect(growthStageFor('herb', 12)).toBe(4)
   })
 
-  it('braucht bei Blumen 5 und bei Bäumen 8 Punkte pro Stufe', () => {
+  it('needs 5 points per stage for flowers and 8 for trees', () => {
     expect(growthStageFor('flower', 4)).toBe(0)
     expect(growthStageFor('flower', 5)).toBe(1)
     expect(growthStageFor('flower', 19)).toBe(3)
@@ -78,21 +78,21 @@ describe('growthStageFor', () => {
     expect(growthStageFor('tree', 32)).toBe(4)
   })
 
-  it('deckelt bei der höchsten Stufe und verträgt Unsinn', () => {
+  it('caps at the highest stage and tolerates nonsense', () => {
     expect(growthStageFor('herb', 999)).toBe(4)
     expect(growthStageFor('tree', -5)).toBe(0)
   })
 })
 
 describe('missedIntervalsFor', () => {
-  it('zählt vor der Fälligkeit und während der Karenz nichts', () => {
+  it('counts nothing before the due day and during the grace period', () => {
     expect(missedIntervalsFor(-3, 1)).toBe(0)
     expect(missedIntervalsFor(0, 1)).toBe(0)
     expect(missedIntervalsFor(6, 7)).toBe(0)
     expect(missedIntervalsFor(2, 3)).toBe(0)
   })
 
-  it('zählt danach ein Intervall pro versäumtem Block', () => {
+  it('counts one interval per missed block afterwards', () => {
     expect(missedIntervalsFor(1, 1)).toBe(1)
     expect(missedIntervalsFor(4, 1)).toBe(4)
 
@@ -105,14 +105,14 @@ describe('missedIntervalsFor', () => {
     expect(missedIntervalsFor(14, 7)).toBe(2)
   })
 
-  it('fällt bei kaputtem Intervall auf einen Tag zurück statt durch 0 zu teilen', () => {
+  it('falls back to one day for a broken interval instead of dividing by 0', () => {
     expect(missedIntervalsFor(3, 0)).toBe(3)
     expect(missedIntervalsFor(3, Number.NaN)).toBe(3)
   })
 })
 
-describe('Fälligkeit', () => {
-  it('macht eine frisch gepflanzte Pflanze sofort fällig', () => {
+describe('due dates', () => {
+  it('makes a freshly planted plant due immediately', () => {
     const plant = makePlant({ lastWateredAt: null, waterings: [], growthPoints: 0 })
     const state = derivePlantState(plant, local(2026, 6, 1, 10))
 
@@ -124,7 +124,7 @@ describe('Fälligkeit', () => {
     expect(state.streak).toBe(0)
   })
 
-  it('ist direkt nach dem Gießen nicht mehr fällig', () => {
+  it('is no longer due right after watering', () => {
     const state = derivePlantState(makePlant(), local(2026, 6, 1, 20))
 
     expect(state.isDue).toBe(false)
@@ -132,11 +132,11 @@ describe('Fälligkeit', () => {
     expect(state.healthState).toBe('healthy')
   })
 
-  it('ist bei Intervall 1 am nächsten Kalendertag fällig', () => {
+  it('is due on the next calendar day at interval 1', () => {
     expect(derivePlantState(makePlant(), local(2026, 6, 2, 0, 5)).isDue).toBe(true)
   })
 
-  it('wartet bei Intervall 3 bis zum dritten Tag', () => {
+  it('waits until the third day at interval 3', () => {
     const plant = makePlant({ intervalDays: 3 })
 
     expect(derivePlantState(plant, local(2026, 6, 2)).isDue).toBe(false)
@@ -144,14 +144,14 @@ describe('Fälligkeit', () => {
     expect(derivePlantState(plant, local(2026, 6, 4, 0, 1)).isDue).toBe(true)
   })
 
-  it('nennt den Fälligkeitstag als lokale Mitternacht', () => {
+  it('reports the due day as local midnight', () => {
     const dueAt = new Date(derivePlantState(makePlant({ intervalDays: 7 }), JUNE_1).dueAt)
 
     expect(dueAt.getDate()).toBe(8)
     expect(dueAt.getHours()).toBe(0)
   })
 
-  it('macht eine eingegangene Pflanze nie fällig', () => {
+  it('never makes a dead plant due', () => {
     const plant = makePlant({ status: 'dead' })
 
     expect(derivePlantState(plant, local(2026, 6, 20)).isDue).toBe(false)
@@ -159,32 +159,32 @@ describe('Fälligkeit', () => {
   })
 })
 
-describe('Gießen kurz vor Mitternacht', () => {
+describe('watering just before midnight', () => {
   const wateredAt = local(2026, 6, 1, 23, 50)
   const lateNightPlant = (intervalDays = 1): Plant =>
     makePlant({ intervalDays, createdAt: wateredAt, lastWateredAt: wateredAt, waterings: [wateredAt] })
 
-  it('ist am nächsten Morgen fällig, obwohl keine 24 Stunden vergangen sind', () => {
+  it('is due the next morning even though 24 hours have not passed', () => {
     const nextMorning = local(2026, 6, 2, 7, 0)
 
     expect(nextMorning - wateredAt).toBeLessThan(24 * HOUR_MS)
     expect(derivePlantState(lateNightPlant(), nextMorning).isDue).toBe(true)
   })
 
-  it('ist neun Minuten später am selben Tag noch nicht fällig', () => {
+  it('is not yet due nine minutes later on the same day', () => {
     expect(derivePlantState(lateNightPlant(), local(2026, 6, 1, 23, 59)).isDue).toBe(false)
   })
 
-  it('überspringt bei Intervall 2 trotzdem den ganzen Folgetag', () => {
+  it('still skips the whole following day at interval 2', () => {
     const plant = lateNightPlant(2)
 
     expect(derivePlantState(plant, local(2026, 6, 2, 7, 0)).isDue).toBe(false)
     expect(derivePlantState(plant, local(2026, 6, 3, 0, 5)).isDue).toBe(true)
   })
 
-  it('driftet nicht: immer früher am Abend gießen bleibt im Tagesrhythmus', () => {
-    // Mit 24-Stunden-Arithmetik würde das zweite Gießen scheitern, weil es
-    // zehn Minuten "zu früh" käme. Kalendarisch ist es ein neuer Tag.
+  it('does not drift: watering ever earlier in the evening keeps the daily rhythm', () => {
+    // With 24-hour arithmetic the second watering would fail because it comes
+    // ten minutes "too early". By the calendar it is a new day.
     const nights = [local(2026, 6, 1, 23, 50), local(2026, 6, 2, 23, 40), local(2026, 6, 3, 23, 30)]
     let current = makePlant({
       createdAt: local(2026, 6, 1, 20),
@@ -204,8 +204,8 @@ describe('Gießen kurz vor Mitternacht', () => {
   })
 })
 
-describe('Gesundheit', () => {
-  it('ist voll und gesund, solange nichts fällig ist', () => {
+describe('health', () => {
+  it('is full and healthy while nothing is due', () => {
     const state = derivePlantState(makePlant(), local(2026, 6, 1, 18))
 
     expect(state.health).toBe(100)
@@ -213,7 +213,7 @@ describe('Gesundheit', () => {
     expect(state.isOverdue).toBe(false)
   })
 
-  it('bleibt am Fälligkeitstag voll, ist aber durstig — ein Intervall Karenz', () => {
+  it('stays full on the due day but turns thirsty — one interval of grace', () => {
     const state = derivePlantState(makePlant(), local(2026, 6, 2, 8))
 
     expect(state.isDue).toBe(true)
@@ -223,7 +223,7 @@ describe('Gesundheit', () => {
     expect(state.missedIntervals).toBe(0)
   })
 
-  it('sinkt danach um 25 Punkte pro verpasstem Intervall bis zum Eingehen', () => {
+  it('then drops 25 points per missed interval until death', () => {
     const plant = makePlant()
     const healthOn = (day: number): number => derivePlantState(plant, local(2026, 6, day, 8)).health
 
@@ -233,9 +233,9 @@ describe('Gesundheit', () => {
     expect(healthOn(6)).toBe(0)
   })
 
-  it('meldet welk statt gesund, sobald überhaupt Gesundheit fehlt', () => {
-    // Die Spec nennt "gesund (>66)", was mit den 25er-Schritten kollidiert:
-    // 75 Punkte bedeuten bereits ein verpasstes Intervall. Präzedenz gewinnt.
+  it('reports wilting rather than healthy as soon as any health is missing', () => {
+    // The spec says "healthy (>66)", which collides with the steps of 25:
+    // 75 points already mean one missed interval. Precedence wins.
     const state = derivePlantState(makePlant(), local(2026, 6, 3, 8))
 
     expect(state.health).toBe(75)
@@ -243,7 +243,7 @@ describe('Gesundheit', () => {
     expect(state.isOverdue).toBe(true)
   })
 
-  it('geht bei 0 ein und bleibt dann bei 0', () => {
+  it('dies at 0 and then stays at 0', () => {
     const state = derivePlantState(makePlant(), local(2026, 6, 6, 8))
 
     expect(state.status).toBe('dead')
@@ -252,7 +252,7 @@ describe('Gesundheit', () => {
     expect(state.streak).toBe(0)
   })
 
-  it('baut bei Intervall 7 in Wochenschritten ab', () => {
+  it('decays in weekly steps at interval 7', () => {
     const plant = makePlant({ intervalDays: 7 })
     const stateOn = (month: number, day: number) => derivePlantState(plant, local(2026, month, day, 8))
 
@@ -264,7 +264,7 @@ describe('Gesundheit', () => {
     expect(stateOn(7, 6).status).toBe('dead')
   })
 
-  it('erweckt eine eingegangene Pflanze nicht, wenn das Intervall verlängert wird', () => {
+  it('does not revive a dead plant when the interval is extended', () => {
     const dead = makePlant({ status: 'dead', intervalDays: 30 })
     const state = derivePlantState(dead, local(2026, 6, 3))
 
@@ -273,8 +273,8 @@ describe('Gesundheit', () => {
   })
 })
 
-describe('App war lange geschlossen', () => {
-  it('ist nach drei Wochen ohne Gießen bei Intervall 1 eingegangen', () => {
+describe('app was closed for a long time', () => {
+  it('is dead after three weeks without watering at interval 1', () => {
     const state = derivePlantState(makePlant(), local(2026, 6, 22, 10))
 
     expect(state.status).toBe('dead')
@@ -282,7 +282,7 @@ describe('App war lange geschlossen', () => {
     expect(state.streak).toBe(0)
   })
 
-  it('ist nach drei Wochen bei Intervall 7 welk, aber am Leben', () => {
+  it('is wilting but alive after three weeks at interval 7', () => {
     const state = derivePlantState(makePlant({ intervalDays: 7 }), local(2026, 6, 22, 10))
 
     expect(state.status).toBe('alive')
@@ -291,12 +291,12 @@ describe('App war lange geschlossen', () => {
     expect(state.missedIntervals).toBe(2)
   })
 
-  it('ergibt denselben Zustand, egal ob zwischendurch gerendert wurde', () => {
+  it('yields the same state whether or not it rendered in between', () => {
     const plant = Object.freeze(makePlant({ intervalDays: 7, waterings: Object.freeze([JUNE_1]) as number[] }))
     const openedAt = local(2026, 6, 22, 10)
 
-    // Simuliert 21 Tage Renders. Es gibt keine Timer und keinen Zustand
-    // zwischen den Aufrufen — das Ergebnis darf davon nicht abhängen.
+    // Simulates 21 days of renders. There are no timers and no state between
+    // the calls — the result must not depend on them.
     for (let day = 1; day <= 21; day += 1) {
       derivePlantState(plant, local(2026, 6, day, 10))
     }
@@ -308,7 +308,7 @@ describe('App war lange geschlossen', () => {
     expect(plant.growthPoints).toBe(1)
   })
 
-  it('baut monoton ab, ohne Sprünge nach oben', () => {
+  it('decays monotonically, without jumping back up', () => {
     const plant = makePlant()
     let previous = 100
 
@@ -321,7 +321,7 @@ describe('App war lange geschlossen', () => {
     expect(previous).toBe(0)
   })
 
-  it('liefert bei mehrfachem Aufruf mit derselben Zeit identische Werte', () => {
+  it('returns identical values when called repeatedly with the same time', () => {
     const plant = makePlant()
     const now = local(2026, 6, 4, 15)
 
@@ -329,20 +329,20 @@ describe('App war lange geschlossen', () => {
   })
 })
 
-describe('Sommerzeit', () => {
-  it('ist am Tag nach dem Gießen fällig, auch wenn dieser nur 23 Stunden hat', () => {
+describe('daylight saving time', () => {
+  it('is due the day after watering even when that day has only 23 hours', () => {
     withTimeZone('Europe/Berlin', () => {
       const wateredAt = local(2026, 3, 28, 12)
       const plant = makePlant({ createdAt: wateredAt, lastWateredAt: wateredAt, waterings: [wateredAt] })
       const nextMorning = local(2026, 3, 29, 11, 30)
 
-      // Physisch nur 22,5 Stunden — kalendarisch ein ganzer Tag.
+      // Physically only 22.5 hours — a whole day by the calendar.
       expect((nextMorning - wateredAt) / HOUR_MS).toBe(22.5)
       expect(derivePlantState(plant, nextMorning).isDue).toBe(true)
     })
   })
 
-  it('bestraft den 25-Stunden-Tag nicht', () => {
+  it('does not punish the 25-hour day', () => {
     withTimeZone('Europe/Berlin', () => {
       const wateredAt = local(2026, 10, 24, 12)
       const plant = makePlant({ createdAt: wateredAt, lastWateredAt: wateredAt, waterings: [wateredAt] })
@@ -357,12 +357,12 @@ describe('Sommerzeit', () => {
     })
   })
 
-  it('zählt Kalendertage über die Umstellung hinweg, nicht 24-Stunden-Blöcke', () => {
+  it('counts calendar days across the switch, not 24-hour blocks', () => {
     withTimeZone('Europe/Berlin', () => {
       const wateredAt = local(2026, 3, 27, 21)
       const plant = makePlant({ createdAt: wateredAt, lastWateredAt: wateredAt, waterings: [wateredAt] })
 
-      // 28. fällig (Karenz), 29. ein Intervall verpasst, 30. zwei.
+      // Due on the 28th (grace), one interval missed on the 29th, two on the 30th.
       expect(derivePlantState(plant, local(2026, 3, 28, 21)).health).toBe(100)
       expect(derivePlantState(plant, local(2026, 3, 29, 21)).health).toBe(75)
       expect(derivePlantState(plant, local(2026, 3, 30, 21)).health).toBe(50)
@@ -370,26 +370,26 @@ describe('Sommerzeit', () => {
   })
 })
 
-describe('Zeitzonenwechsel', () => {
-  it('folgt der Gerätezeit: dieselben Zeitstempel, andere Zone, andere Fälligkeit', () => {
+describe('time zone changes', () => {
+  it('follows device time: same timestamps, different zone, different due date', () => {
     const wateredAt = Date.UTC(2026, 2, 10, 0, 0)
     const now = Date.UTC(2026, 2, 10, 6, 0)
     const plant = makePlant({ createdAt: wateredAt, lastWateredAt: wateredAt, waterings: [wateredAt] })
 
-    // Berlin (UTC+1): gegossen am 10.03. um 01:00, jetzt 07:00 am 10.03. —
-    // derselbe Kalendertag, also noch nicht fällig.
+    // Berlin (UTC+1): watered on 10 Mar at 01:00, now 07:00 on 10 Mar —
+    // the same calendar day, so not due yet.
     const berlin = withTimeZone('Europe/Berlin', () => derivePlantState(plant, now))
     expect(berlin.isDue).toBe(false)
     expect(berlin.daysUntilDue).toBe(1)
 
-    // New York (UTC-4, Sommerzeit seit 08.03.): gegossen am 09.03. um 20:00,
-    // jetzt 02:00 am 10.03. — ein Kalendertag später, also fällig.
+    // New York (UTC-4, DST since 8 Mar): watered on 9 Mar at 20:00,
+    // now 02:00 on 10 Mar — one calendar day later, so due.
     const newYork = withTimeZone('America/New_York', () => derivePlantState(plant, now))
     expect(newYork.isDue).toBe(true)
     expect(newYork.daysUntilDue).toBe(0)
   })
 
-  it('ist bei langem Rückstand in jeder Zone eingegangen', () => {
+  it('is dead in every zone once far enough behind', () => {
     const wateredAt = Date.UTC(2026, 5, 1, 12, 0)
     const now = Date.UTC(2026, 6, 11, 12, 0)
     const plant = makePlant({ createdAt: wateredAt, lastWateredAt: wateredAt, waterings: [wateredAt] })
@@ -411,7 +411,7 @@ describe('Zeitzonenwechsel', () => {
     })
   })
 
-  it('verschiebt den Streak nicht, solange Gießabstände ganze Kalendertage bleiben', () => {
+  it('does not shift the streak while watering gaps stay whole calendar days', () => {
     const perfect = wateredOnDays([1, 2, 3, 4, 5])
 
     const berlin = withTimeZone('Europe/Berlin', () => derivePlantState(perfect, local(2026, 6, 5, 20)))
@@ -419,18 +419,18 @@ describe('Zeitzonenwechsel', () => {
   })
 })
 
-describe('Streak', () => {
-  it('ist 0 ohne Gießvorgang', () => {
+describe('streak', () => {
+  it('is 0 without a watering', () => {
     const plant = makePlant({ lastWateredAt: null, waterings: [], growthPoints: 0 })
     expect(derivePlantState(plant, local(2026, 6, 1, 10)).streak).toBe(0)
   })
 
-  it('zählt aufeinanderfolgende Gießvorgänge', () => {
+  it('counts consecutive waterings', () => {
     const plant = wateredOnDays([1, 2, 3])
     expect(derivePlantState(plant, local(2026, 6, 3, 20)).streak).toBe(3)
   })
 
-  it('bleibt erhalten, solange die Pflanze nur durstig ist', () => {
+  it('survives while the plant is merely thirsty', () => {
     const plant = wateredOnDays([1, 2, 3])
     const state = derivePlantState(plant, local(2026, 6, 4, 8))
 
@@ -438,7 +438,7 @@ describe('Streak', () => {
     expect(state.streak).toBe(3)
   })
 
-  it('fällt auf 0, sobald die Karenz überschritten ist', () => {
+  it('drops to 0 once the grace period is exceeded', () => {
     const plant = wateredOnDays([1, 2, 3])
     const state = derivePlantState(plant, local(2026, 6, 5, 8))
 
@@ -446,13 +446,13 @@ describe('Streak', () => {
     expect(state.streak).toBe(0)
   })
 
-  it('bricht an einer Lücke in der Vergangenheit ab', () => {
-    // Am 3. Juni war die Pflanze schon welk — dieses Gießen startet neu.
+  it('breaks at a gap in the past', () => {
+    // On 3 June the plant was already wilting — this watering starts over.
     const plant = wateredOnDays([1, 4, 5])
     expect(derivePlantState(plant, local(2026, 6, 5, 20)).streak).toBe(2)
   })
 
-  it('verzeiht bei Intervall 3 einen Abstand innerhalb der Karenz', () => {
+  it('forgives a gap within the grace period at interval 3', () => {
     const withinGrace = wateredOnDays([1, 6], { intervalDays: 3 })
     expect(derivePlantState(withinGrace, local(2026, 6, 6, 20)).streak).toBe(2)
 
@@ -460,7 +460,7 @@ describe('Streak', () => {
     expect(derivePlantState(pastGrace, local(2026, 6, 7, 20)).streak).toBe(1)
   })
 
-  it('stellt beim Gießen einer welken Pflanze die Gesundheit her, kostet aber den Streak', () => {
+  it('restores health when watering a wilting plant but costs the streak', () => {
     const plant = wateredOnDays([1, 2, 3, 4, 5])
     expect(derivePlantState(plant, local(2026, 6, 5, 20)).streak).toBe(5)
 
@@ -481,22 +481,22 @@ describe('Streak', () => {
 })
 
 describe('water', () => {
-  it('verweigert das Gießen, wenn die Pflanze nicht fällig ist', () => {
+  it('refuses to water when the plant is not due', () => {
     expect(water(makePlant(), local(2026, 6, 1, 20))).toEqual({ ok: false, reason: 'not-due' })
   })
 
-  it('verweigert das Gießen einer eingegangenen Pflanze', () => {
+  it('refuses to water a dead plant', () => {
     expect(water(makePlant({ status: 'dead' }), local(2026, 6, 2, 8))).toEqual({
       ok: false,
       reason: 'dead',
     })
   })
 
-  it('verweigert das Gießen, wenn die Pflanze gerade eingegangen ist', () => {
+  it('refuses to water when the plant has just died', () => {
     expect(water(makePlant(), local(2026, 6, 10, 8))).toEqual({ ok: false, reason: 'dead' })
   })
 
-  it('vergibt einen Wachstumspunkt und hängt den Zeitstempel an', () => {
+  it('grants one growth point and appends the timestamp', () => {
     const now = local(2026, 6, 2, 8)
     const outcome = water(makePlant(), now)
 
@@ -508,7 +508,7 @@ describe('water', () => {
     expect(outcome.plant.waterings).toEqual([JUNE_1, now])
   })
 
-  it('mutiert die übergebene Pflanze nicht', () => {
+  it('does not mutate the plant passed in', () => {
     const waterings = Object.freeze([JUNE_1]) as number[]
     const plant = Object.freeze(makePlant({ waterings })) as Plant
 
@@ -517,7 +517,7 @@ describe('water', () => {
     expect(plant.growthPoints).toBe(1)
   })
 
-  it('lässt höchstens ein Gießen pro Intervall zu', () => {
+  it('allows at most one watering per interval', () => {
     const first = water(makePlant(), local(2026, 6, 2, 8))
     expect(first.ok).toBe(true)
     if (!first.ok) return
@@ -526,7 +526,7 @@ describe('water', () => {
     expect(water(first.plant, local(2026, 6, 3, 7)).ok).toBe(true)
   })
 
-  it('führt über genug Gießvorgänge bis zur höchsten Stufe', () => {
+  it('reaches the highest stage given enough waterings', () => {
     let current = makePlant({ lastWateredAt: null, waterings: [], growthPoints: 0 })
 
     for (let day = 1; day <= 12; day += 1) {
@@ -544,7 +544,7 @@ describe('water', () => {
 })
 
 describe('stageProgress', () => {
-  it('zeigt den Fortschritt innerhalb der Stufe', () => {
+  it('shows the progress within the stage', () => {
     const state = derivePlantState(makePlant({ growthPoints: 4 }), JUNE_1)
 
     expect(state.growthStage).toBe(1)
@@ -553,7 +553,7 @@ describe('stageProgress', () => {
     expect(state.stageProgress).toBeCloseTo(1 / 3)
   })
 
-  it('ist auf der höchsten Stufe voll', () => {
+  it('is full at the highest stage', () => {
     const state = derivePlantState(makePlant({ growthPoints: 20 }), JUNE_1)
 
     expect(state.growthStage).toBe(4)
@@ -562,12 +562,12 @@ describe('stageProgress', () => {
 })
 
 describe('reconcileStatus', () => {
-  it('gibt dieselbe Referenz zurück, wenn sich nichts ändert', () => {
+  it('returns the same reference when nothing changes', () => {
     const plant = makePlant()
     expect(reconcileStatus(plant, local(2026, 6, 2, 8))).toBe(plant)
   })
 
-  it('schreibt einen erkannten Tod in den Status', () => {
+  it('writes a detected death into the status', () => {
     const plant = makePlant()
     const reconciled = reconcileStatus(plant, local(2026, 6, 20, 8))
 
@@ -575,14 +575,14 @@ describe('reconcileStatus', () => {
     expect(plant.status).toBe('alive')
   })
 
-  it('belebt eine eingegangene Pflanze nicht wieder', () => {
+  it('does not bring a dead plant back', () => {
     const dead = makePlant({ status: 'dead', intervalDays: 30 })
     expect(reconcileStatus(dead, local(2026, 6, 2, 8)).status).toBe('dead')
   })
 })
 
 describe('countDue', () => {
-  it('zählt nur lebende, fällige Pflanzen', () => {
+  it('counts only living plants that are due', () => {
     const now = local(2026, 6, 2, 8)
     const plants = [
       makePlant({ id: 'due' }),
@@ -594,7 +594,7 @@ describe('countDue', () => {
     expect(countDue(plants, now)).toBe(2)
   })
 
-  it('ist 0 ohne Pflanzen', () => {
+  it('is 0 without plants', () => {
     expect(countDue([], local(2026, 6, 2))).toBe(0)
   })
 })

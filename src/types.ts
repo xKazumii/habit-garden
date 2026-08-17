@@ -1,23 +1,22 @@
-/** Kategorie einer Pflanze — bestimmt, wie viele Punkte eine Wachstumsstufe kostet. */
+/** A plant's category — decides how many points one growth stage costs. */
 export type PlantCategory = 'herb' | 'flower' | 'tree'
 
 export type PlantStatus = 'alive' | 'dead'
 
-/** 0 Samen, 1 Keimling, 2 Jungpflanze, 3 ausgewachsen, 4 blühend. */
+/** 0 seed, 1 sprout, 2 young, 3 grown, 4 blooming. */
 export type GrowthStage = 0 | 1 | 2 | 3 | 4
 
 /**
- * Darstellungszustand.
- * Reihenfolge der Präzedenz: dead > wilting > thirsty > healthy.
+ * Presentation state.
+ * Precedence order: dead > wilting > thirsty > healthy.
  */
 export type HealthState = 'healthy' | 'thirsty' | 'wilting' | 'dead'
 
 /**
- * Was tatsächlich in IndexedDB liegt.
+ * What actually lives in IndexedDB.
  *
- * Hier stehen ausschließlich Rohdaten. Alles, was sich aus Zeitstempeln
- * ableiten lässt, wird NICHT gespeichert, sondern bei jedem Render neu
- * berechnet — siehe `PlantState`.
+ * Raw data only. Anything derivable from timestamps is NOT stored but
+ * recomputed on every render — see `PlantState`.
  */
 export interface Plant {
   id: string
@@ -27,33 +26,50 @@ export interface Plant {
   intervalDays: number
   createdAt: number
   lastWateredAt: number | null
-  /** Zeitstempel aller Gießvorgänge, aufsteigend sortiert. */
+  /** Timestamps of every watering, sorted ascending. */
   waterings: number[]
   growthPoints: number
   /**
-   * Zwischengespeicherter Status, damit er in IndexedDB abfragbar ist.
-   * Die Wahrheit liegt in `PlantState.status`; die Datenschicht schreibt ein
-   * erkanntes 'dead' zurück. Einmal 'dead' bleibt 'dead'.
+   * Cached status so it is queryable in IndexedDB.
+   * The truth lives in `PlantState.status`; the data layer writes a detected
+   * 'dead' back. Once 'dead', always 'dead'.
    */
   status: PlantStatus
 }
 
 /**
- * Einstellungen des Gartens. Genau eine Zeile mit fester id — es gibt nur ein
- * Set, deshalb kein Key-Value-Schema.
+ * A purchased seed. The price is **stored alongside it**: otherwise a later
+ * change to the price table would retroactively shift the balance.
+ */
+export interface PurchasedSeed {
+  speciesId: string
+  price: number
+  unlockedAt: number
+}
+
+/**
+ * Garden settings. Exactly one row with a fixed id — there is only ever one
+ * set, so no key-value schema.
  *
- * Das Theme steht bewusst NICHT hier, sondern in localStorage: es muss vor dem
- * ersten Paint synchron lesbar sein und gehört zum Gerät, nicht zum Garten.
+ * The theme deliberately does NOT live here but in localStorage: it has to be
+ * readable synchronously before first paint, and it belongs to the device rather
+ * than to the garden.
  */
 export interface GardenSettings {
   id: string
-  /** Leer, wenn beim Start übersprungen wurde. */
+  /** Empty when it was skipped at first start. */
   gardenerName: string
-  /** Wann die Begrüßung beantwortet wurde. `null` = noch nie gezeigt. */
+  /** When the greeting was answered. `null` = never shown. */
   onboardedAt: number | null
+  /**
+   * Coins from uprooted plants. Uprooting removes the history, so the earned
+   * total would shrink — see src/lib/coins.ts.
+   */
+  bankedCoins: number
+  purchases: PurchasedSeed[]
 }
 
-/** Felder, die zum Anpflanzen nötig sind. Alles andere setzt die Datenschicht. */
+/** Fields needed to plant. Everything else is set by the data layer. */
 export interface NewPlantInput {
   category: PlantCategory
   species: string
@@ -62,8 +78,8 @@ export interface NewPlantInput {
 }
 
 /**
- * Vollständig abgeleiteter Zustand. Wird nie persistiert.
- * Immer aus Zeitstempeln berechnet, nie über Timer oder Intervalle.
+ * Fully derived state. Never persisted.
+ * Always computed from timestamps, never via timers or intervals.
  */
 export interface PlantState {
   status: PlantStatus
@@ -71,38 +87,38 @@ export interface PlantState {
   /** 0–100. */
   health: number
   healthState: HealthState
-  /** Gießen ist erlaubt. */
+  /** Watering is allowed. */
   isDue: boolean
-  /** Karenz überschritten, die Gesundheit sinkt bereits. */
+  /** Grace period exceeded, health is already dropping. */
   isOverdue: boolean
-  /** Anzahl Intervalle, für die schon Gesundheit abgezogen wurde. */
+  /** Number of intervals that already cost health. */
   missedIntervals: number
-  /** Aufeinanderfolgende Intervalle ohne Verpassen. */
+  /** Consecutive intervals without a miss. */
   streak: number
-  /** Lokale Mitternacht des Tages, an dem gegossen werden darf. */
+  /** Local midnight of the day watering becomes allowed. */
   dueAt: number
-  /** Negativ = überfällig, 0 = heute fällig, positiv = noch Zeit. */
+  /** Negative = overdue, 0 = due today, positive = time left. */
   daysUntilDue: number
-  /** Punkte innerhalb der aktuellen Stufe. */
+  /** Points within the current stage. */
   pointsIntoStage: number
-  /** Punkte, die eine Stufe dieser Kategorie kostet. */
+  /** Points one stage costs for this category. */
   pointsPerStage: number
-  /** 0–1, Fortschritt zur nächsten Stufe. 1 auf der höchsten Stufe. */
+  /** 0–1, progress towards the next stage. 1 at the highest stage. */
   stageProgress: number
 }
 
-/** Pflanze plus berechneter Zustand — das, was die UI konsumiert. */
+/** Plant plus derived state — what the UI consumes. */
 export interface DerivedPlant extends Plant {
   state: PlantState
 }
 
-/** Gründe, aus denen die Wachstumslogik das Gießen ablehnt. */
+/** Reasons the growth logic rejects a watering. */
 export type WaterFailure = 'not-due' | 'dead'
 
-/** Ergebnis eines Gießversuchs. Kein Werfen, damit die UI es direkt auswerten kann. */
+/** Result of a watering attempt. No throwing, so the UI can read it directly. */
 export type WaterOutcome = { ok: true; plant: Plant } | { ok: false; reason: WaterFailure }
 
-/** Wie `WaterOutcome`, aber die Datenschicht kann die Pflanze auch nicht finden. */
+/** Like `WaterOutcome`, but the data layer may also fail to find the plant. */
 export type StoredWaterOutcome =
   | { ok: true; plant: Plant }
   | { ok: false; reason: WaterFailure | 'missing' }

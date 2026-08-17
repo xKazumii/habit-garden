@@ -1,9 +1,9 @@
 /**
- * Vorgeschlagene Rhythmen im Anpflanz-Flow. Alles außerhalb dieser Liste läuft
- * über „eigener Wert" und wird in src/db/plants.ts auf
- * MIN_INTERVAL_DAYS … MAX_INTERVAL_DAYS geklemmt.
+ * Suggested rhythms in the planting flow. Anything outside this list goes
+ * through "custom value" and is clamped to MIN_INTERVAL_DAYS …
+ * MAX_INTERVAL_DAYS in src/db/plants.ts.
  *
- * Die Beschriftungen kommen aus `rhythmLabel()` in src/i18n/labels.ts.
+ * The labels come from `rhythmLabel()` in src/i18n/labels.ts.
  */
 export const RHYTHM_PRESET_DAYS: readonly number[] = [1, 2, 3, 7]
 

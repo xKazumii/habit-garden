@@ -5,7 +5,7 @@ import { SPECIES } from '../../config/species'
 import { t } from '../../i18n'
 
 /**
- * Leeres Beet. Zeigt einen Keimling als Versprechen, nicht als Datensatz.
+ * Empty bed. Shows a sprout as a promise, not as a record.
  */
 
 const PREVIEW_SPECIES = SPECIES[0]?.id ?? ''

@@ -1,31 +1,31 @@
 @import 'tailwindcss';
 
 /*
- * Design-Tokens.
+ * Design tokens.
  *
- * Die Werte stammen 1:1 aus dem Design-Prototyp (external/Habit Garden Prototyp).
- * Alle Farben, Radien, Schatten und Kurven stehen hier als CSS-Variablen — nichts
- * davon wird in Komponenten hart kodiert.
+ * Values are taken verbatim from the design prototype. Every colour, radius,
+ * shadow and easing curve lives here as a CSS variable — none of it is
+ * hard-coded in components.
  *
- * Der Dark Mode ist tiefes Waldgrün statt Schwarz. Gesteuert wird er über
- * [data-theme] auf <html>, das immer den aufgelösten Wert trägt (light oder
- * dark, nie system) — gesetzt vom Inline-Skript in index.html und danach von
- * src/hooks/useTheme.ts. Deshalb steht hier bewusst KEIN
- * @media (prefers-color-scheme): das wäre eine zweite Kopie der Palette.
+ * Dark mode is deep forest green rather than black. It is driven by
+ * [data-theme] on <html>, which always carries the resolved value (light or
+ * dark, never system) — set by the inline script in index.html and kept in sync
+ * by src/hooks/useTheme.ts. That is why there is deliberately NO
+ * @media (prefers-color-scheme) here: it would be a second copy of the palette.
  */
 :root {
   color-scheme: light;
 
-  /* Flächen */
+  /* Surfaces */
   --hg-canvas: #faf7f2;
   --hg-surface: #ffffff;
-  /* Das Beet, auf dem die Pflanzen im Garten stehen */
+  /* The bed the plants stand on in the garden */
   --hg-bed: #f1ebe0;
-  /* Inaktive Flächen: deaktivierte Buttons, leere Fortschritts-Pips */
+  /* Inactive surfaces: disabled buttons, empty progress pips */
   --hg-inert: #e4dfd5;
   --hg-nav: rgba(250, 247, 242, 0.92);
 
-  /* Marke */
+  /* Brand */
   --hg-primary: #7c9885;
   --hg-primary-strong: #64806d;
   --hg-primary-soft: #eaf1eb;
@@ -38,47 +38,47 @@
   --hg-text: #2e3a32;
   --hg-muted: #6b7a6e;
   --hg-on-primary: #ffffff;
-  /* Terrakotta bleibt in beiden Themes gleich, die Schrift darauf also auch. */
+  /* Terracotta is identical in both themes, so the text on it is too. */
   --hg-on-accent: #ffffff;
 
-  /* Zustände der Pflanzen. Die Illustration selbst entsättigt zusätzlich
-     über CSS-Filter — siehe HEALTH_RENDER in der CLAUDE.md. */
+  /* Plant health states. The illustration additionally desaturates via CSS
+     filters — see HEALTH_RENDER in CLAUDE.md. */
   --hg-healthy: #7c9885;
   --hg-thirsty: #8fa9bf;
   --hg-wilting: #c8a06a;
   --hg-gone: #a89f94;
 
-  /* Erde unter der Pflanze */
+  /* Soil beneath the plant */
   --hg-soil: #bc9271;
   --hg-soil-dry: #b08b6c;
-  /* Aufhellung auf dem Erdhügel — bleibt in beiden Themes gleich, Erde ist Erde */
+  /* Highlight on the soil mound — same in both themes, soil is soil */
   --hg-soil-highlight: rgba(255, 255, 255, 0.14);
   --hg-seed: #7b5b3e;
   --hg-seed-sheen: rgba(255, 255, 255, 0.3);
   --hg-plant-shadow: rgba(46, 58, 50, 0.1);
 
-  /* Heatmap der letzten 8 Wochen */
+  /* Heatmap of the last 8 weeks */
   --hg-heat-full: #7c9885;
   --hg-heat-partial: rgba(124, 152, 133, 0.42);
   --hg-heat-empty: rgba(46, 58, 50, 0.07);
 
-  /* Feine Trennlinien — sparsam, wir arbeiten mit Schatten statt Borders */
+  /* Hairlines — used sparingly, we work with shadows instead of borders */
   --hg-hairline: rgba(46, 58, 50, 0.07);
 
-  /* Weiche Schatten statt Rahmen */
+  /* Soft shadows instead of frames */
   --hg-shadow-card: 0 12px 26px -20px rgba(46, 58, 50, 0.5);
   --hg-shadow-raised: 0 14px 30px -24px rgba(46, 58, 50, 0.6);
   --hg-shadow-lifted: 0 22px 50px -34px rgba(46, 58, 50, 0.5);
   --hg-shadow-nav: 0 -14px 30px -22px rgba(46, 58, 50, 0.5);
   --hg-shadow-sheet: 0 -20px 50px -24px rgba(31, 42, 34, 0.5);
-  /* Beet: feine Lichtkante oben, damit die Fläche eingelassen wirkt */
+  /* Bed: a faint light edge on top so the surface reads as inset */
   --hg-shadow-bed: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   --hg-shadow-primary: 0 16px 30px -16px rgba(124, 152, 133, 0.95);
   --hg-shadow-accent: 0 16px 30px -12px rgba(208, 140, 96, 0.95);
   --hg-scrim: rgba(31, 42, 34, 0.34);
 
-  /* Radien: 16–24px, Sheets und Beet etwas runder */
-  /* Nur für sehr kleine Flächen wie die Heatmap-Zellen */
+  /* Radii: 16–24px, sheets and the bed a little rounder */
+  /* Only for very small surfaces such as the heatmap cells */
   --hg-radius-xs: 4px;
   --hg-radius-sm: 14px;
   --hg-radius-md: 16px;
@@ -88,7 +88,7 @@
   --hg-radius-sheet: 30px;
   --hg-radius-pill: 999px;
 
-  /* Bewegung — sanft, nie sprunghaft */
+  /* Motion — gentle, never abrupt */
   --hg-ease-soft: cubic-bezier(0.22, 0.9, 0.28, 1);
   --hg-ease-pop: cubic-bezier(0.24, 1.2, 0.3, 1);
   --hg-duration-fast: 160ms;
@@ -97,14 +97,14 @@
 }
 
 /*
- * Hier stehen absichtlich nur die Tokens, die sich ändern.
- * Ohne dunkle Variante bleiben: Radien, Kurven und Dauern (rein geometrisch),
- * die Erdfarben samt Samen und Schatten (Erde ist Erde), --hg-on-accent
- * (Terrakotta bleibt gleich, die Schrift darauf also auch) sowie die beiden
- * farbigen Glows --hg-shadow-primary und --hg-shadow-accent.
+ * Only the tokens that actually change are listed here.
+ * Deliberately without a dark variant: radii, easings and durations (purely
+ * geometric), the soil colours including seed and shadow (soil is soil),
+ * --hg-on-accent (terracotta stays the same, so does the text on it) and the
+ * two coloured glows --hg-shadow-primary and --hg-shadow-accent.
  */
 [data-theme='dark'] {
-  /* Färbt Scrollbalken, Formularelemente und die Auswahlfarbe mit um. */
+  /* Recolours scrollbars, form controls and the selection colour too. */
   color-scheme: dark;
 
   --hg-canvas: #1b241e;
@@ -146,8 +146,9 @@
 }
 
 /*
- * `inline` ist hier wichtig: die generierten Utilities referenzieren die Variable
- * statt ihren Wert zu kopieren. Nur so wirkt ein späterer Theme-Wechsel zur Laufzeit.
+ * `inline` matters here: the generated utilities reference the variable instead
+ * of copying its value. Only then does a later theme switch take effect at
+ * runtime.
  */
 @theme inline {
   --color-canvas: var(--hg-canvas);
@@ -214,17 +215,19 @@
   --animate-pop: hg-pop 550ms var(--hg-ease-pop) both;
   --animate-drop: hg-drop 900ms ease-out both;
   --animate-grow: hg-grow 600ms var(--hg-ease-pop) both;
+  /* Two full turns — matches the reward's visible duration exactly. */
+  --animate-flip: hg-flip 900ms linear 2 both;
 }
 
 /*
- * Micro-Animationen, übernommen aus dem Prototyp.
- *  hg-in     Inhalte fahren beim Wechsel sanft ein
- *  hg-up     Bottom Sheet und Vollbild-Flows fahren von unten auf
- *  hg-sway   lebende Pflanzen wiegen sich minimal
- *  hg-pulse  Ring um fällige Pflanzen
- *  hg-pop    Bestätigung nach dem Anpflanzen
- *  hg-drop   Wassertropfen beim Gießen
- *  hg-grow   Pflanze hüpft beim Stufenaufstieg
+ * Micro animations, taken from the prototype.
+ *  hg-in     content eases in on a change
+ *  hg-up     bottom sheet and full-screen flows rise from below
+ *  hg-sway   living plants sway a little
+ *  hg-pulse  ring around plants that are due
+ *  hg-pop    confirmation after planting
+ *  hg-drop   water droplet while watering
+ *  hg-grow   plant hops when it reaches a new stage
  */
 @keyframes hg-in {
   from {
@@ -309,9 +312,19 @@
   }
 }
 
+/* The coin spins when there is something to celebrate. */
+@keyframes hg-flip {
+  from {
+    transform: rotateY(0);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
 @layer base {
   html {
-    /* iOS: verhindert, dass beim Overscroll weiß durchblitzt */
+    /* iOS: keeps white from flashing through on overscroll */
     background-color: var(--hg-canvas);
     -webkit-text-size-adjust: 100%;
   }
@@ -323,7 +336,7 @@
     font-synthesis-weight: none;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* Bounce-Scrolling der Seite selbst unterdrücken, Listen scrollen weiter */
+    /* Suppress bounce scrolling of the page itself; lists still scroll */
     overscroll-behavior-y: none;
   }
 
@@ -349,7 +362,7 @@
   }
 }
 
-/* Safe-Area-Insets für iOS. Immer über diese Utilities, nie hart kodiert. */
+/* Safe-area insets for iOS. Always via these utilities, never hard-coded. */
 @utility pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
 }
@@ -362,15 +375,15 @@
 @utility pr-safe {
   padding-right: env(safe-area-inset-right, 0px);
 }
-/* Bottom Tab Bar: eigener Abstand plus Home-Indicator */
+/* Bottom tab bar: its own spacing plus the home indicator */
 @utility pb-safe-nav {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing) * 6);
 }
-/* Fuß eines Sheets oder Vollbild-Flows: eigener Abstand plus Home-Indicator */
+/* Foot of a sheet or full-screen flow: own spacing plus home indicator */
 @utility pb-safe-sheet {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing) * 7.5);
 }
-/* FAB: bleibt auf jedem Gerät über der Tab Bar */
+/* FAB: stays above the tab bar on every device */
 @utility bottom-safe-fab {
   bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing) * 24);
 }

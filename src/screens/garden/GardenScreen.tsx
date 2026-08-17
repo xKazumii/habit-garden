@@ -1,31 +1,36 @@
 import { t, tCount } from '../../i18n'
 import { daytimeFor } from '../../lib/greeting'
 import type { DerivedPlant } from '../../types'
+import { CoinChip } from './CoinChip'
 import { EmptyGarden } from './EmptyGarden'
 import { GardenCell } from './GardenCell'
 
 /**
- * Der Garten: Tagesgruß, wie viele Pflanzen Wasser brauchen, darunter das Beet.
+ * The garden: greeting, how many plants need water, and the bed below.
  *
- * Der Zähler oben rechts ist bewusst `aria-hidden` — die Zeile darüber sagt
- * dasselbe schon in Worten, zweimal vorgelesen wäre er nur Lärm.
+ * The counter in the top right is deliberately `aria-hidden` — the line above
+ * already says the same thing in words, so reading it twice would be noise.
  */
 
 interface GardenScreenProps {
   plants: readonly DerivedPlant[]
   now: number
-  /** Leer, wenn beim Start übersprungen wurde — dann grüßt der Garten ohne. */
+  /** Empty when it was skipped at start — the garden then greets without it. */
   gardenerName: string
+  balance: number
   onOpenPlant: (id: string) => void
   onPlant: () => void
+  onOpenShop: () => void
 }
 
 export const GardenScreen = ({
   plants,
   now,
   gardenerName,
+  balance,
   onOpenPlant,
   onPlant,
+  onOpenShop,
 }: GardenScreenProps) => {
   const dueCount = plants.filter((plant) => plant.state.isDue).length
 
@@ -42,12 +47,16 @@ export const GardenScreen = ({
           <p className="text-muted text-sm">{tCount('garden.needsWater', dueCount)}</p>
         </div>
 
-        <span
-          aria-hidden="true"
-          className="bg-surface text-primary shadow-card flex h-11 w-11 flex-none items-center justify-center rounded-md text-[15px] font-semibold"
-        >
-          {dueCount}
-        </span>
+        <div className="flex flex-none items-center gap-2">
+          <CoinChip balance={balance} onOpenShop={onOpenShop} />
+
+          <span
+            aria-hidden="true"
+            className="bg-surface text-primary shadow-card flex h-11 w-11 flex-none items-center justify-center rounded-md text-[15px] font-semibold"
+          >
+            {dueCount}
+          </span>
+        </div>
       </header>
 
       {plants.length === 0 ? (

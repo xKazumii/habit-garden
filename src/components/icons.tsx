@@ -1,16 +1,16 @@
 import type { ReactNode } from 'react'
 
 /**
- * Die Icons der App. Durchgehend Linien-Icons auf 24er-Raster, Farbe immer
- * `currentColor` — die Umgebung bestimmt sie, nie das Icon selbst.
+ * The app's icons. Line icons throughout on a 24-unit grid, colour always
+ * `currentColor` — the surroundings decide it, never the icon itself.
  *
- * Rein dekorativ: die Bedeutung steht immer im Label des umgebenden Elements.
+ * Purely decorative: the meaning always lives in the surrounding element's label.
  */
 
 const VIEWBOX = '0 0 24 24'
 const DEFAULT_SIZE = 22
 
-/** Linienstärken nach Verwendungszweck, damit die Icons zusammen ruhig wirken. */
+/** Stroke widths by purpose, so the icons sit together calmly. */
 const STROKE_TAB = 1.6
 const STROKE_DROP = 1.7
 const STROKE_ACTION = 1.8

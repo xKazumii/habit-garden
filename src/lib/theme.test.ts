@@ -10,62 +10,62 @@ import {
 import { isThemePreference, resolveTheme, toThemePreference } from './theme'
 
 describe('resolveTheme', () => {
-  it('folgt bei „System" der Geräteeinstellung', () => {
+  it('follows the device setting for "system"', () => {
     expect(resolveTheme('system', true)).toBe('dark')
     expect(resolveTheme('system', false)).toBe('light')
   })
 
-  it('überstimmt die Geräteeinstellung bei fester Wahl', () => {
+  it('overrides the device setting for a fixed choice', () => {
     expect(resolveTheme('light', true)).toBe('light')
     expect(resolveTheme('dark', false)).toBe('dark')
   })
 })
 
 describe('toThemePreference', () => {
-  it('nimmt alle gültigen Werte an', () => {
+  it('accepts every valid value', () => {
     expect(toThemePreference('system')).toBe('system')
     expect(toThemePreference('light')).toBe('light')
     expect(toThemePreference('dark')).toBe('dark')
   })
 
-  it('fällt bei allem anderen auf den Standard zurück', () => {
+  it('falls back to the default for anything else', () => {
     expect(toThemePreference(null)).toBe(DEFAULT_THEME_PREFERENCE)
     expect(toThemePreference('sepia')).toBe(DEFAULT_THEME_PREFERENCE)
     expect(toThemePreference(42)).toBe(DEFAULT_THEME_PREFERENCE)
   })
 
-  it('erkennt gültige Präferenzen als solche', () => {
+  it('recognises valid preferences as such', () => {
     expect(isThemePreference('dark')).toBe(true)
     expect(isThemePreference('sepia')).toBe(false)
   })
 })
 
 /*
- * Das Inline-Skript in index.html muss vor dem Bundle laufen und kann deshalb
- * nichts importieren — es dupliziert Speicherschlüssel, Media Query und die
- * beiden Theme-Farben. Diese Tests halten beide Stellen zusammen.
+ * The inline script in index.html has to run before the bundle and therefore
+ * cannot import anything — it duplicates the storage key, the media query and the
+ * two theme colours. These tests keep both places in sync.
  */
-describe('Inline-Skript in index.html', () => {
+describe('inline script in index.html', () => {
   const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8')
 
-  it('benutzt denselben Speicherschlüssel wie die Konfiguration', () => {
+  it('uses the same storage key as the configuration', () => {
     expect(html).toContain(THEME_STORAGE_KEY)
   })
 
-  it('benutzt dieselbe Media Query', () => {
+  it('uses the same media query', () => {
     expect(html).toContain(DARK_MEDIA_QUERY)
   })
 
-  it('kennt beide Theme-Farben', () => {
+  it('knows both theme colours', () => {
     expect(html).toContain(THEME_COLOR.light)
     expect(html).toContain(THEME_COLOR.dark)
   })
 
-  it('setzt das Attribut, auf das die Palette hört', () => {
+  it('sets the attribute the palette listens to', () => {
     expect(html).toContain('data-theme')
   })
 
-  it('läuft vor dem Modul-Skript, sonst flackert es', () => {
+  it('runs before the module script, otherwise it flickers', () => {
     expect(html.indexOf(THEME_STORAGE_KEY)).toBeLessThan(html.indexOf('src/main.tsx'))
   })
 })

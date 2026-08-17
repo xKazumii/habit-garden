@@ -6,10 +6,10 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 /**
- * KRITISCH: Das Projekt wird als Project Page unter
- * https://xkazumii.github.io/habit-garden/ ausgeliefert.
- * `base`, `start_url` und `scope` müssen identisch sein, und es darf nirgends
- * ein absoluter Asset-Pfad wie "/icons/..." stehen.
+ * CRITICAL: the project ships as a project page at
+ * https://xkazumii.github.io/habit-garden/
+ * `base`, `start_url` and `scope` must be identical, and nowhere may there be an
+ * absolute asset path such as "/icons/...".
  */
 const BASE_PATH = '/habit-garden/'
 
@@ -18,11 +18,11 @@ const APP_SHORT_NAME = 'Garden'
 const APP_DESCRIPTION =
   'Ein digitaler Garten für deine Gewohnheiten. Jede Gewohnheit ist eine Pflanze — erledige sie, gieße sie, sieh sie wachsen.'
 
-/** Muss zum Hintergrund der App passen, damit die Statusleiste nahtlos wirkt. */
+/** Must match the app background so the status bar looks seamless. */
 const THEME_COLOR = '#FAF7F2'
 const BACKGROUND_COLOR = '#FAF7F2'
 
-/** Relativ zur manifest.webmanifest — dadurch bleibt der Base-Path austauschbar. */
+/** Relative to manifest.webmanifest — keeps the base path interchangeable. */
 const ICONS = [
   { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' as const },
   { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' as const },
@@ -37,9 +37,9 @@ const ICONS = [
 const PRECACHE_GLOB = ['**/*.{js,css,html,svg,png,ico,woff2}']
 
 /**
- * Die Version steht nur in der package.json. Sie wird zur Bauzeit als
- * `__APP_VERSION__` eingesetzt (deklariert in src/globals.d.ts), damit die
- * Einstellungen sie anzeigen können, ohne dass eine zweite Stelle driftet.
+ * The version lives only in package.json. It is injected at build time as
+ * `__APP_VERSION__` (declared in src/globals.d.ts) so the settings screen can
+ * show it without a second place drifting out of sync.
  */
 const { version: APP_VERSION } = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf8'),

@@ -10,11 +10,11 @@ import { t } from '../../i18n'
 import type { DerivedPlant } from '../../types'
 
 /**
- * Bearbeiten im Sheet. Änderbar sind nur Name und Rhythmus — Art und Kategorie
- * bleiben, denn die Pflanze ist mit ihnen gewachsen.
+ * Editing inside the sheet. Only the name and the rhythm can change — species and
+ * category stay, because the plant grew with them.
  *
- * Ein verlängerter Rhythmus erweckt eine eingegangene Pflanze nicht wieder:
- * `status` ist in der Datenschicht bewusst klebrig.
+ * A longer rhythm does not revive a dead plant: `status` is deliberately sticky
+ * in the data layer.
  */
 
 interface EditPlantFormProps {

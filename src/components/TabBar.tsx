@@ -5,7 +5,7 @@ import { t } from '../i18n'
 import { CalendarCheckIcon, GearIcon, SproutIcon, type IconProps } from './icons'
 
 /**
- * Bottom Tab Bar. Kein Router — der aktive Tab ist State in `App`.
+ * Bottom tab bar. No router — the active tab is state in `App`.
  */
 
 const TAB_ICONS: Readonly<Record<TabId, ComponentType<IconProps>>> = {

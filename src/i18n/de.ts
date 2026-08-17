@@ -1,10 +1,9 @@
 /**
- * Alle sichtbaren Texte der App. In Komponenten steht kein einziger
- * hartkodierter String — Zugriff ausschließlich über `t()` bzw. `tCount()`.
+ * Every visible string in the app. Components contain no hard-coded text —
+ * access goes exclusively through `t()` and `tCount()`.
  *
- * Aufbau: nach Bereich gruppiert. Ein Eintrag mit den Schlüsseln
- * `zero`/`one`/`other` ist eine Pluralform und wird über `tCount()` gelesen.
- * Platzhalter werden als `{name}` geschrieben.
+ * Layout: grouped by area. An entry with the keys `zero`/`one`/`other` is a
+ * plural form and is read via `tCount()`. Placeholders are written as `{name}`.
  */
 export const de = {
   app: {
@@ -39,15 +38,69 @@ export const de = {
   },
 
   species: {
-    basil: { name: 'Basilikum' },
+    parsley: { name: 'Petersilie' },
     mint: { name: 'Minze' },
+    basil: { name: 'Basilikum' },
+    chives: { name: 'Schnittlauch' },
+    oregano: { name: 'Oregano' },
+    thyme: { name: 'Thymian' },
+    sage: { name: 'Salbei' },
+    lemonbalm: { name: 'Zitronenmelisse' },
+    rosemary: { name: 'Rosmarin' },
     lavender: { name: 'Lavendel' },
+
+    daisy: { name: 'Gänseblümchen' },
     sunflower: { name: 'Sonnenblume' },
-    tulip: { name: 'Tulpe' },
+    marigold: { name: 'Ringelblume' },
+    cornflower: { name: 'Kornblume' },
+    forgetmenot: { name: 'Vergissmeinnicht' },
     poppy: { name: 'Mohn' },
+    cosmos: { name: 'Kosmee' },
+    crocus: { name: 'Krokus' },
+    tulip: { name: 'Tulpe' },
+    dahlia: { name: 'Dahlie' },
+
     oak: { name: 'Eiche' },
-    cherry: { name: 'Kirschbaum' },
+    birch: { name: 'Birke' },
+    pine: { name: 'Kiefer' },
+    maple: { name: 'Ahorn' },
+    apple: { name: 'Apfelbaum' },
+    fig: { name: 'Feigenbaum' },
     olive: { name: 'Olivenbaum' },
+    lemon: { name: 'Zitronenbaum' },
+    cherry: { name: 'Kirschbaum' },
+    ginkgo: { name: 'Ginkgo' },
+  },
+
+  reward: {
+    coins: {
+      one: '+1 Münze',
+      other: '+{count} Münzen',
+    },
+    streak: '{count}× in Folge',
+  },
+
+  shop: {
+    title: 'Samenladen',
+    body: 'Beständigkeit zahlt Münzen. Für Münzen wachsen neue Arten in deinem Garten.',
+    balanceLabel: {
+      zero: 'Keine Münzen',
+      one: 'Eine Münze',
+      other: '{count} Münzen',
+    },
+    open: 'Samenladen öffnen',
+    close: 'Schließen',
+    owned: 'freigeschaltet',
+    buy: '{species} für {price} Münzen freischalten',
+    missing: 'Noch {count} fehlen',
+    progress: '{owned} von {total} Arten',
+    allOwned: 'Du hast alle Arten freigeschaltet.',
+    earning: {
+      title: 'Wie du Münzen verdienst',
+      watering: 'Eine Münze für jedes Gießen.',
+      streak:
+        'Serien zahlen extra: ab 7× in Folge, dann bei 14×, 30×, 60× und 100×. Reißt eine Serie, fängt sie neu an — die Boni gibt es wieder.',
+    },
   },
 
   stage: {
@@ -96,8 +149,8 @@ export const de = {
       day: 'Guten Tag',
       evening: 'Guten Abend',
     },
-    /* Zweite Fassung statt eines Platzhalters im selben Text: ohne Namen soll
-       kein Komma und keine Lücke übrig bleiben. */
+    /* A second wording rather than a placeholder in the same string: without a
+       name there should be no leftover comma or gap. */
     greetingNamed: {
       morning: 'Guten Morgen, {name}',
       day: 'Guten Tag, {name}',

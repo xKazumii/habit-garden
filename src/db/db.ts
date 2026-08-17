@@ -5,13 +5,13 @@ import type { GardenSettings, Plant } from '../types'
 const DB_NAME = 'habit-garden'
 
 /**
- * Nur `id` ist Primärschlüssel. Indiziert wird, wonach die Screens filtern und
- * sortieren. `waterings` bleibt ein einfaches Array im Datensatz — die
- * Auswertung passiert in src/lib/growth.ts, nicht in der Datenbank.
+ * Only `id` is the primary key. Indexes cover what the screens filter and sort
+ * by. `waterings` stays a plain array on the record — it is evaluated in
+ * src/lib/growth.ts, not in the database.
  */
 const PLANT_INDEXES = 'id, createdAt, status, lastWateredAt, category'
 
-/** Genau eine Zeile, siehe `GardenSettings`. Kein weiterer Index nötig. */
+/** Exactly one row, see `GardenSettings`. No further index needed. */
 const SETTINGS_INDEXES = 'id'
 
 export class HabitGardenDatabase extends Dexie {
@@ -22,9 +22,9 @@ export class HabitGardenDatabase extends Dexie {
     super(DB_NAME)
 
     /*
-     * Frühere Versionen bleiben deklariert, sonst kann Dexie einen bestehenden
-     * Garten nicht hochziehen. Version 2 ergänzt nur die Tabelle `settings` —
-     * an den Pflanzen ändert sich nichts, es braucht keine Migration.
+     * Earlier versions stay declared, otherwise Dexie cannot upgrade an existing
+     * garden. Version 2 only adds the `settings` table — nothing changes about
+     * the plants, so no migration is needed.
      */
     this.version(1).stores({ plants: PLANT_INDEXES })
     this.version(2).stores({ plants: PLANT_INDEXES, settings: SETTINGS_INDEXES })

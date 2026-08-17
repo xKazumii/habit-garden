@@ -1,11 +1,11 @@
 /**
- * Die Heatmap der letzten acht Wochen.
+ * The heatmap of the last eight weeks.
  *
- * Wie die gesamte Wachstumslogik rein aus Zeitstempeln gerechnet, ohne Timer
- * und ohne UI-Bezug. Für jeden Kalendertag im Fenster wird rekonstruiert, wie
- * die Pflanze an dem Tag dastand — bewertet mit derselben
- * `missedIntervalsFor()`, die auch Gesundheit und Streak bestimmt. Dadurch kann
- * die Heatmap gar nicht erst eine eigene Wahrheit erfinden.
+ * Like all the growth logic, computed purely from timestamps, without timers and
+ * without UI ties. For every calendar day in the window it reconstructs how the
+ * plant stood on that day — judged by the same `missedIntervalsFor()` that
+ * drives health and streak. That way the heatmap cannot invent a truth of its
+ * own.
  */
 
 import { HEATMAP_DAYS } from '../config/heatmap'
@@ -14,31 +14,31 @@ import { missedIntervalsFor, safeIntervalDays } from './growth'
 import { dayNumber } from './time'
 
 /**
- * `watered`  an dem Tag wurde gegossen
- * `idle`     nichts fällig, oder fällig und noch in der Karenz
- * `missed`   über die Karenz hinaus fällig und nicht gegossen
- * `before`   der Tag liegt vor dem Anpflanzen
+ * `watered`  watered on that day
+ * `idle`     nothing due, or due and still within the grace period
+ * `missed`   due beyond the grace period and not watered
+ * `before`   the day lies before planting
  */
 export type HeatLevel = 'watered' | 'idle' | 'missed' | 'before'
 
 export interface HeatCell {
-  /** Fortlaufende Nummer des lokalen Kalendertags, siehe `dayNumber()`. */
+  /** Running number of the local calendar day, see `dayNumber()`. */
   day: number
   level: HeatLevel
 }
 
 export interface Heatmap {
-  /** Genau `HEATMAP_DAYS` Zellen, aufsteigend. Die letzte ist heute. */
+  /** Exactly `HEATMAP_DAYS` cells, ascending. The last one is today. */
   cells: HeatCell[]
   /**
-   * Anteil der Tage seit dem Anpflanzen, an denen die Pflanze versorgt war
-   * (gegossen oder nichts fällig). `null`, solange es keinen Tag zu bewerten
-   * gibt — etwa bei einem Anpflanzdatum in der Zukunft.
+   * Share of the days since planting on which the plant was cared for (watered
+   * or nothing due). `null` while there is no day to judge — for instance with a
+   * planting date in the future.
    */
   rate: number | null
 }
 
-/** Letzter Gießtag an oder vor `day`. `null`, wenn es noch keinen gab. */
+/** Last watering day on or before `day`. `null` if there was none yet. */
 const lastWateringUpTo = (wateringDays: readonly number[], day: number): number | null => {
   for (let index = wateringDays.length - 1; index >= 0; index -= 1) {
     const candidate = wateringDays[index]
@@ -77,8 +77,8 @@ export const buildHeatmap = (plant: Plant, now: number = Date.now()): Heatmap =>
     }
 
     /*
-     * Der Fälligkeitstag *aus Sicht dieses Tages*: das letzte Gießen davor plus
-     * Intervall — oder, wenn nie gegossen wurde, der Pflanztag.
+     * The due day *as seen from this day*: the last watering before it plus the
+     * interval — or, if it was never watered, the planting day.
      */
     const previous = lastWateringUpTo(wateringDays, day)
     const dueDay = previous === null ? createdDay : previous + intervalDays

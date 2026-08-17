@@ -4,13 +4,13 @@ import { healthLabel, stageLabel } from '../../i18n/labels'
 import type { DerivedPlant, HealthState } from '../../types'
 
 /**
- * Die beiden Kennzahlen über dem Gießen-Button: Wachstum und Streak.
+ * The two figures above the watering button: growth and streak.
  *
- * Der Zustand steht farbig unter dem Streak — er ist die Erklärung dafür, warum
- * eine Serie gerissen ist.
+ * The health state sits coloured beneath the streak — it explains why a run
+ * broke.
  */
 
-/** Eine Marke je Stufe, gefüllt bis zur erreichten. */
+/** One pip per stage, filled up to the one reached. */
 const STAGE_PIPS = Array.from({ length: MAX_GROWTH_STAGE + 1 }, (_unused, index) => index)
 
 const HEALTH_TEXT: Readonly<Record<HealthState, string>> = {

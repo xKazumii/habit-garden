@@ -6,8 +6,8 @@ import { Pill } from './Pill'
 import { TextField } from './TextField'
 
 /**
- * Rhythmus wählen: Presets als Chips, alles andere über „eigener Wert".
- * Gemeinsam genutzt vom Anpflanz-Flow und vom Bearbeiten im Detail-Sheet.
+ * Pick a rhythm: presets as chips, everything else via "custom value".
+ * Shared by the planting flow and by editing in the detail sheet.
  */
 
 const clampIntervalDays = (days: number): number =>
@@ -16,8 +16,8 @@ const clampIntervalDays = (days: number): number =>
 interface RhythmPickerProps {
   intervalDays: number
   /**
-   * „Eigener Wert" ist aktiv. Bewusst getrennt vom Zahlenwert: sonst würde die
-   * Auswahl zurückspringen, sobald jemand zufällig eine 7 eintippt.
+   * "Custom value" is active. Deliberately separate from the number: otherwise
+   * the selection would jump back as soon as someone happens to type a 7.
    */
   isCustom: boolean
   onChange: (intervalDays: number, isCustom: boolean) => void

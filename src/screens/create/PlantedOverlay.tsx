@@ -7,14 +7,14 @@ import { rhythmLabel } from '../../i18n/labels'
 import type { Plant } from '../../types'
 
 /**
- * Kurze Bestätigung nach dem Anpflanzen. Verschwindet von selbst wieder —
- * ein Zwischenbild, kein Dialog, den man wegklicken muss.
+ * A brief confirmation after planting. Disappears on its own — an interstitial,
+ * not a dialog that has to be dismissed.
  */
 
-/** So lange bleibt die Bestätigung stehen. */
+/** How long the confirmation stays on screen. */
 const VISIBLE_MS = 1700
 
-/** Frisch gesät ist immer Stufe 0. */
+/** Freshly sown is always stage 0. */
 const SEED_STAGE = 0
 
 interface PlantedOverlayProps {

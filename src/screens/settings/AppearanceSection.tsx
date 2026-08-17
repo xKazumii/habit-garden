@@ -4,12 +4,12 @@ import type { ThemeControl } from '../../hooks/useTheme'
 import { t } from '../../i18n'
 
 /**
- * Theme-Auswahl. „System" folgt der Geräteeinstellung, die beiden anderen
- * überstimmen sie fest.
+ * Theme picker. "System" follows the device setting, the other two override it
+ * for good.
  *
- * Die Chips sind eine exklusive Auswahl, tragen aber `aria-pressed` statt
- * Radio-Semantik — deshalb umschließt sie eine benannte Gruppe, damit klar ist,
- * dass sie zusammengehören.
+ * The chips are an exclusive choice but carry `aria-pressed` rather than radio
+ * semantics — hence the named group around them, making it clear they belong
+ * together.
  */
 
 interface AppearanceSectionProps {

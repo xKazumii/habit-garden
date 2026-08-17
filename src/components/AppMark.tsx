@@ -1,7 +1,7 @@
 /**
- * Die Marke der App: Sprössling im Beet, Knospe in Terrakotta.
- * Identisch mit dem PWA-Icon (siehe scripts/generate-icons.mjs), damit
- * Startbildschirm und App dasselbe Zeichen zeigen.
+ * The app mark: a sprout in the bed, bud in terracotta.
+ * Identical to the PWA icon (see scripts/generate-icons.mjs) so the home screen
+ * and the app show the same sign.
  */
 
 interface AppMarkProps {

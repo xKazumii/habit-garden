@@ -4,11 +4,11 @@ import { getSettings } from '../db/settings'
 import type { GardenSettings } from '../types'
 
 /**
- * Die Garten-Einstellungen, live an IndexedDB gebunden.
+ * The garden settings, bound live to IndexedDB.
  *
- * `undefined` heißt: die Datenbank hat noch nicht geantwortet. Erst danach
- * steht fest, ob die Begrüßung gezeigt werden muss — sonst würde sie bei jedem
- * Start kurz aufblitzen.
+ * `undefined` means the database has not answered yet. Only afterwards is it
+ * clear whether the greeting has to be shown — otherwise it would flash up on
+ * every start.
  */
 export const useSettings = (): GardenSettings | undefined =>
   useLiveQuery(() => getSettings(), [])

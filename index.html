@@ -8,10 +8,10 @@
       name="description"
       content="Ein digitaler Garten für deine Gewohnheiten. Jede Gewohnheit ist eine Pflanze — erledige sie, gieße sie, sieh sie wachsen."
     />
-    <!-- Passt zum App-Hintergrund, damit die Statusleiste nahtlos wirkt.
-         Der Wert hier ist die helle Variante und muss mit THEME_COLOR in
-         vite.config.ts übereinstimmen. Im Dark Mode schreibt das Skript unten
-         die dunkle Variante hinein. -->
+    <!-- Matches the app background so the status bar looks seamless.
+         The value here is the light variant and must agree with THEME_COLOR in
+         vite.config.ts. In dark mode the script below writes the dark variant
+         in its place. -->
     <meta name="theme-color" content="#FAF7F2" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Habit Garden" />
@@ -20,12 +20,12 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
     <!--
-      Setzt das Theme VOR dem ersten Paint. Ein React-Effekt liefe erst danach,
-      die App würde beim Laden kurz hell aufblitzen.
+      Sets the theme BEFORE first paint. A React effect would only run afterwards,
+      so the app would briefly flash light while loading.
 
-      Die drei Werte stehen bewusst doppelt: hier und in src/config/theme.ts.
-      Das Skript muss vor dem Bundle laufen und kann deshalb nichts importieren.
-      src/lib/theme.test.ts vergleicht beide Stellen.
+      The three values are duplicated on purpose: here and in src/config/theme.ts.
+      This script has to run before the bundle and therefore cannot import
+      anything. src/lib/theme.test.ts compares both places.
     -->
     <script>
       ;(() => {
@@ -40,7 +40,7 @@
             .querySelector('meta[name="theme-color"]')
             ?.setAttribute('content', dark ? '#1B241E' : '#FAF7F2')
         } catch {
-          /* Privater Modus ohne localStorage: dann eben hell. */
+          /* Private mode without localStorage: light it is. */
         }
       })()
     </script>

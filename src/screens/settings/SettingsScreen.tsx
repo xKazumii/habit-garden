@@ -11,10 +11,10 @@ import { AppearanceSection } from './AppearanceSection'
 import { NameSection } from './NameSection'
 
 /**
- * Einstellungen: Darstellung, Name und die Sicherung.
+ * Settings: appearance, name and the backup.
  *
- * Ohne Konto und ohne Server ist der Export die einzige Möglichkeit, den Garten
- * zu behalten — deshalb steht der Hinweis dazu auf demselben Screen.
+ * Without an account and without a server the export is the only way to keep the
+ * garden — which is why the note about it lives on the same screen.
  */
 
 const JSON_MIME = 'application/json'
@@ -65,7 +65,7 @@ interface SettingsScreenProps {
 export const SettingsScreen = ({ plants, settings, theme }: SettingsScreenProps) => {
   const fileInput = useRef<HTMLInputElement>(null)
   const [notice, setNotice] = useState<Notice | null>(null)
-  /* Ein Import kann den Namen mitbringen — dann muss das Feld neu aufsetzen. */
+  /* An import can bring a name along — the field then has to remount. */
   const [nameFieldKey, setNameFieldKey] = useState(0)
 
   const exportPlants = () => {
@@ -86,7 +86,7 @@ export const SettingsScreen = ({ plants, settings, theme }: SettingsScreenProps)
       anchor.click()
       setNotice({ tone: 'ok', text: t('settings.export.done') })
     } catch (error: unknown) {
-      console.error('[backup] Export fehlgeschlagen', error)
+      console.error('[backup] Export failed', error)
       setNotice({ tone: 'error', text: t('settings.export.failed') })
     } finally {
       URL.revokeObjectURL(url)
@@ -95,7 +95,7 @@ export const SettingsScreen = ({ plants, settings, theme }: SettingsScreenProps)
 
   const onFileChosen = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    // Zurücksetzen, sonst löst dieselbe Datei beim zweiten Mal kein change aus.
+    // Reset, otherwise picking the same file again fires no change event.
     event.target.value = ''
     if (!file) return
 
@@ -118,7 +118,7 @@ export const SettingsScreen = ({ plants, settings, theme }: SettingsScreenProps)
         parsed.skipped > 0 ? ` ${tCount('settings.import.skipped', parsed.skipped)}` : ''
       setNotice({ tone: parsed.skipped > 0 ? 'error' : 'ok', text: `${done}${skipped}` })
     } catch (error: unknown) {
-      console.error('[backup] Import fehlgeschlagen', error)
+      console.error('[backup] Import failed', error)
       setNotice({ tone: 'error', text: t('settings.import.failed') })
     }
   }

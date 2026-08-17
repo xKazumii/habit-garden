@@ -13,10 +13,10 @@ import { HabitStep } from './HabitStep'
 import { SpeciesStep } from './SpeciesStep'
 
 /**
- * Anpflanzen in drei Schritten: Kategorie → Sorte → Gewohnheit.
+ * Planting in three steps: category → species → habit.
  *
- * Der Flow legt die Pflanze selbst an und reicht sie nach oben durch — die
- * Shell muss nur noch die Bestätigung zeigen.
+ * The flow creates the plant itself and hands it upwards — the shell only has to
+ * show the confirmation.
  */
 
 const CATEGORY_STEP = 1
@@ -26,11 +26,13 @@ const STEPS: readonly number[] = [CATEGORY_STEP, SPECIES_STEP, HABIT_STEP]
 const ICON_SIZE = 18
 
 interface CreateFlowProps {
+  /** Only unlocked species can be chosen. */
+  unlocked: ReadonlySet<string>
   onClose: () => void
   onPlanted: (plant: Plant) => void
 }
 
-export const CreateFlow = ({ onClose, onPlanted }: CreateFlowProps) => {
+export const CreateFlow = ({ unlocked, onClose, onPlanted }: CreateFlowProps) => {
   const [step, setStep] = useState<number>(CATEGORY_STEP)
   const [draft, setDraft] = useState<PlantDraft>(emptyDraft)
   const [isSaving, setIsSaving] = useState(false)
@@ -38,7 +40,7 @@ export const CreateFlow = ({ onClose, onPlanted }: CreateFlowProps) => {
   const patch = (changes: Partial<PlantDraft>) =>
     setDraft((current) => ({ ...current, ...changes }))
 
-  /* Die Kategorie führt direkt weiter — sie ist die Entscheidung, nicht ein Feld. */
+  /* The category advances immediately — it is the decision, not a field. */
   const selectCategory = (category: PlantCategory) => {
     patch({ category, species: defaultSpeciesFor(category)?.id ?? null })
     setStep(SPECIES_STEP)
@@ -73,7 +75,7 @@ export const CreateFlow = ({ onClose, onPlanted }: CreateFlowProps) => {
         }),
       )
     } catch (error: unknown) {
-      console.error('[db] Anpflanzen fehlgeschlagen', error)
+      console.error('[db] Planting failed', error)
       setIsSaving(false)
     }
   }
@@ -155,6 +157,7 @@ export const CreateFlow = ({ onClose, onPlanted }: CreateFlowProps) => {
           <SpeciesStep
             category={draft.category}
             selected={draft.species}
+            unlocked={unlocked}
             onSelect={(species) => patch({ species })}
           />
         )}

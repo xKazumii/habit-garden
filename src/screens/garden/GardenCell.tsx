@@ -5,8 +5,8 @@ import { rhythmLabel, speciesName } from '../../i18n/labels'
 import type { DerivedPlant } from '../../types'
 
 /**
- * Eine Kachel im Beet. Fällige Pflanzen bekommen einen Ring, der ruhig pulst —
- * das ist der einzige Hinweis, den der Garten von sich aus gibt.
+ * One tile in the bed. Plants that are due get a ring pulsing calmly — the only
+ * hint the garden gives of its own accord.
  */
 
 interface GardenCellProps {

@@ -6,6 +6,7 @@ import { PrimaryButton } from '../../components/PrimaryButton'
 import { SecondaryButton } from '../../components/SecondaryButton'
 import { PLANT_SIZE } from '../../config/plant-visuals'
 import type { PlantEdit } from '../../db/plants'
+import { useDroplet } from '../../hooks/useDroplet'
 import { t, tCount } from '../../i18n'
 import { rhythmLabel, speciesName } from '../../i18n/labels'
 import type { DerivedPlant } from '../../types'
@@ -14,8 +15,8 @@ import { Heatmap } from './Heatmap'
 import { StatCards } from './StatCards'
 
 /**
- * Das Detail-Sheet. Drei Zustände in einem Sheet, damit man beim Bearbeiten
- * oder Ausgraben nicht die Pflanze aus den Augen verliert.
+ * The detail sheet. Three modes in one sheet so that editing or uprooting never
+ * takes the plant out of sight.
  */
 
 type SheetMode = 'view' | 'edit' | 'confirmUproot'
@@ -38,8 +39,14 @@ export const PlantSheet = ({
   onUproot,
 }: PlantSheetProps) => {
   const [mode, setMode] = useState<SheetMode>('view')
+  const { pouring, pour } = useDroplet()
   const titleId = useId()
   const { state } = plant
+
+  const water = () => {
+    pour()
+    onWater()
+  }
 
   const waterLabel =
     state.status === 'dead'
@@ -57,6 +64,7 @@ export const PlantSheet = ({
             growthStage={state.growthStage}
             healthState={state.healthState}
             size={PLANT_SIZE.detail}
+            pouring={pouring}
           />
         </span>
 
@@ -84,7 +92,7 @@ export const PlantSheet = ({
         <>
           <StatCards plant={plant} />
 
-          <PrimaryButton onClick={onWater} disabled={!state.isDue}>
+          <PrimaryButton onClick={water} disabled={!state.isDue}>
             {waterLabel}
           </PrimaryButton>
 

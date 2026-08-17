@@ -2,13 +2,13 @@ import type { GrowthStage, HealthState, PlantCategory } from '../types'
 import { t, type MessageKey } from './index'
 
 /**
- * Wiederkehrende Beschriftungen, die aus Daten entstehen.
+ * Recurring labels that are derived from data.
  *
- * Damit steht die Zuordnung „Stufe 3 heißt Ausgewachsen" genau an einer Stelle
- * und nicht in jedem Screen erneut.
+ * Keeps the mapping "stage 3 is called grown" in exactly one place instead of
+ * repeating it in every screen.
  */
 
-/** Indiziert mit `GrowthStage` (0–4). */
+/** Indexed by `GrowthStage` (0–4). */
 const STAGE_KEYS: Readonly<Record<GrowthStage, MessageKey>> = {
   0: 'stage.seed',
   1: 'stage.sprout',
@@ -17,7 +17,7 @@ const STAGE_KEYS: Readonly<Record<GrowthStage, MessageKey>> = {
   4: 'stage.blooming',
 }
 
-/** Rhythmen mit eigenem Wort. Alles andere wird ausgeschrieben. */
+/** Rhythms that have their own word. Everything else is spelled out. */
 const RHYTHM_KEYS: Readonly<Record<number, MessageKey>> = {
   1: 'rhythm.daily',
   2: 'rhythm.every2',
@@ -34,9 +34,9 @@ export const categoryName = (category: PlantCategory): string => t(`category.${c
 export const categoryHint = (category: PlantCategory): string => t(`category.${category}.hint`)
 
 /**
- * `Plant.species` ist im Datenmodell ein freier String — ein Import könnte eine
- * unbekannte Art mitbringen. Deshalb die Zusicherung: `t()` fällt bei einem
- * unbekannten Schlüssel sichtbar auf ihn selbst zurück und warnt im Dev-Modus.
+ * `Plant.species` is a free-form string in the data model — an import could
+ * bring an unknown species. Hence the assertion: for an unknown key `t()` visibly
+ * falls back to the key itself and warns in dev mode.
  */
 export const speciesName = (id: string): string => t(`species.${id}.name` as MessageKey)
 

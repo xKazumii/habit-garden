@@ -1,30 +1,30 @@
 import type { PlantCategory } from '../types'
 
-/** Wachstumspunkte, die eine Stufe kostet — je Kategorie. */
+/** Growth points one stage costs — per category. */
 export const POINTS_PER_STAGE: Record<PlantCategory, number> = {
   herb: 3,
   flower: 5,
   tree: 8,
 }
 
-/** Punkte pro Gießvorgang. */
+/** Points per watering. */
 export const POINTS_PER_WATERING = 1
 
-/** Höchste Stufe: 0 Samen … 4 blühend. */
+/** Highest stage: 0 seed … 4 blooming. */
 export const MAX_GROWTH_STAGE = 4
 
 export const MAX_HEALTH = 100
 export const MIN_HEALTH = 0
 
-/** Abzug pro verpasstem Intervall, sobald die Karenz abgelaufen ist. */
+/** Penalty per missed interval once the grace period has passed. */
 export const HEALTH_PENALTY_PER_MISSED_INTERVAL = 25
 
 /**
- * Karenz in Intervallen: so lange bleibt eine fällige Pflanze bei voller
- * Gesundheit ("durstig"), bevor der Verfall einsetzt.
+ * Grace period in intervals: how long a due plant stays at full health
+ * ("thirsty") before decay sets in.
  */
 export const GRACE_INTERVALS = 1
 
-/** Grenzen für einen eigenen Rhythmus. */
+/** Bounds for a custom rhythm. */
 export const MIN_INTERVAL_DAYS = 1
 export const MAX_INTERVAL_DAYS = 30

@@ -5,7 +5,7 @@ import type { Plant } from '../types'
 import { buildHeatmap, type HeatLevel } from './heatmap'
 import { dayNumber } from './time'
 
-/** Zeitstempel aus lokalen Kalenderfeldern. Monat 1-basiert, damit Tests lesbar bleiben. */
+/** Timestamp from local calendar fields. Month is 1-based to keep tests readable. */
 const local = (year: number, month: number, day: number, hour = 12): number =>
   new Date(year, month - 1, day, hour, 0, 0, 0).getTime()
 
@@ -25,7 +25,7 @@ const makePlant = (overrides: Partial<Plant> = {}): Plant => ({
   ...overrides,
 })
 
-/** Pflanze, die an den genannten Junitagen gegossen wurde. */
+/** A plant watered on the given days in June. */
 const wateredOnJune = (days: readonly number[], overrides: Partial<Plant> = {}): Plant => {
   const waterings = days.map((day) => local(2026, 6, day, 9))
   return makePlant({
@@ -36,12 +36,12 @@ const wateredOnJune = (days: readonly number[], overrides: Partial<Plant> = {}):
   })
 }
 
-/** Zustand der Zelle eines bestimmten Kalendertags. */
+/** Level of the cell for a given calendar day. */
 const levelOn = (plant: Plant, now: number, day: number): HeatLevel | undefined =>
   buildHeatmap(plant, now).cells.find((cell) => cell.day === dayNumber(day))?.level
 
 describe('buildHeatmap', () => {
-  it('liefert genau acht Wochen und endet heute', () => {
+  it('returns exactly eight weeks and ends today', () => {
     const now = local(2026, 6, 20)
     const { cells } = buildHeatmap(makePlant(), now)
 
@@ -50,7 +50,7 @@ describe('buildHeatmap', () => {
     expect(cells[0]?.day).toBe(dayNumber(now) - HEATMAP_DAYS + 1)
   })
 
-  it('gibt die Zellen lückenlos aufsteigend zurück', () => {
+  it('returns the cells ascending without gaps', () => {
     const { cells } = buildHeatmap(makePlant(), local(2026, 6, 20))
 
     cells.forEach((cell, index) => {
@@ -59,24 +59,24 @@ describe('buildHeatmap', () => {
     })
   })
 
-  it('markiert Tage vor dem Anpflanzen als before', () => {
+  it('marks days before planting as before', () => {
     const now = local(2026, 6, 10)
 
     expect(levelOn(makePlant(), now, local(2026, 5, 31))).toBe('before')
     expect(levelOn(makePlant(), now, JUNE_1)).not.toBe('before')
   })
 
-  it('markiert Gießtage als watered', () => {
+  it('marks watering days as watered', () => {
     const plant = wateredOnJune([1, 2, 3])
     const now = local(2026, 6, 3, 20)
 
     expect(levelOn(plant, now, local(2026, 6, 2))).toBe('watered')
   })
 
-  it('lässt den Fälligkeitstag selbst als idle durchgehen', () => {
+  it('lets the due day itself pass as idle', () => {
     /*
-     * Täglich, zuletzt am 1. gegossen: am 2. fällig. Die Karenz ist bei
-     * Intervall 1 genau dieser eine Tag — ab dem 3. kostet es Gesundheit.
+     * Daily, last watered on the 1st: due on the 2nd. At interval 1 the grace
+     * period is exactly that single day — from the 3rd on it costs health.
      */
     const plant = wateredOnJune([1])
     const now = local(2026, 6, 3, 20)
@@ -84,7 +84,7 @@ describe('buildHeatmap', () => {
     expect(levelOn(plant, now, local(2026, 6, 2))).toBe('idle')
   })
 
-  it('markiert Tage jenseits der Karenz als missed', () => {
+  it('marks days beyond the grace period as missed', () => {
     const plant = wateredOnJune([1])
     const now = local(2026, 6, 6, 20)
 
@@ -93,10 +93,10 @@ describe('buildHeatmap', () => {
     expect(levelOn(plant, now, local(2026, 6, 5))).toBe('missed')
   })
 
-  it('bewertet jeden Tag aus der Sicht dieses Tages, nicht aus heutiger', () => {
+  it('judges every day from that day, not from today', () => {
     /*
-     * Lücke vom 1. bis zum 10., danach wieder täglich. Der 5. muss rückblickend
-     * als verpasst dastehen, obwohl die Pflanze heute wieder gesund ist.
+     * A gap from the 1st to the 10th, then daily again. In hindsight the 5th
+     * must read as missed, even though the plant is healthy again today.
      */
     const plant = wateredOnJune([1, 10, 11, 12])
     const now = local(2026, 6, 12, 20)
@@ -105,16 +105,16 @@ describe('buildHeatmap', () => {
     expect(levelOn(plant, now, local(2026, 6, 11))).toBe('watered')
   })
 
-  it('kennt bei einer nie gegossenen Pflanze den Pflanztag als Fälligkeit', () => {
+  it('uses the planting day as the due day for a plant never watered', () => {
     const now = local(2026, 6, 6, 20)
 
-    // Sofort ab dem Pflanztag fällig, ab dem Folgetag verpasst.
+    // Due immediately from the planting day, missed from the next day on.
     expect(levelOn(makePlant(), now, JUNE_1)).toBe('idle')
     expect(levelOn(makePlant(), now, local(2026, 6, 2))).toBe('missed')
   })
 
-  it('rechnet ein längeres Intervall korrekt in Karenz und Rückstand um', () => {
-    // Alle 7 Tage, zuletzt am 1.: fällig am 8., Karenz bis 14., ab dem 15. verpasst.
+  it('translates a longer interval into grace and arrears correctly', () => {
+    // Every 7 days, last on the 1st: due on the 8th, grace until the 14th, missed from the 15th.
     const plant = wateredOnJune([1], { intervalDays: 7 })
     const now = local(2026, 6, 20, 20)
 
@@ -123,7 +123,7 @@ describe('buildHeatmap', () => {
     expect(levelOn(plant, now, local(2026, 6, 15))).toBe('missed')
   })
 
-  it('zählt mehrfaches Gießen am selben Tag als einen Tag', () => {
+  it('counts several waterings on the same day as one day', () => {
     const plant = makePlant({
       waterings: [local(2026, 6, 1, 8), local(2026, 6, 1, 20)],
       lastWateredAt: local(2026, 6, 1, 20),
@@ -136,24 +136,24 @@ describe('buildHeatmap', () => {
   })
 
   describe('rate', () => {
-    it('ist 1, solange nichts verpasst wurde', () => {
+    it('is 1 while nothing was missed', () => {
       const plant = wateredOnJune([1, 2, 3])
       expect(buildHeatmap(plant, local(2026, 6, 3, 20)).rate).toBe(1)
     })
 
-    it('zählt nur Tage ab dem Anpflanzen', () => {
-      // Am 1. gepflanzt und gegossen, heute ist der 2. und noch in der Karenz.
+    it('counts only days from planting on', () => {
+      // Planted and watered on the 1st, today is the 2nd and still within grace.
       const plant = wateredOnJune([1])
       expect(buildHeatmap(plant, local(2026, 6, 2, 20)).rate).toBe(1)
     })
 
-    it('sinkt mit jedem verpassten Tag', () => {
-      // 1. gegossen, 2. noch Karenz, 3. bis 5. verpasst → 2 von 5 Tagen versorgt.
+    it('drops with every missed day', () => {
+      // Watered on the 1st, grace on the 2nd, 3rd to 5th missed → 2 of 5 days cared for.
       const plant = wateredOnJune([1])
       expect(buildHeatmap(plant, local(2026, 6, 5, 20)).rate).toBeCloseTo(2 / 5)
     })
 
-    it('ist null, wenn es noch keinen Tag zu bewerten gibt', () => {
+    it('is null while there is no day to judge', () => {
       const plant = makePlant({ createdAt: local(2026, 6, 20) })
       expect(buildHeatmap(plant, local(2026, 6, 10)).rate).toBeNull()
     })

@@ -2,8 +2,8 @@ import { DEFAULT_INTERVAL_DAYS } from '../../config/rhythms'
 import type { PlantCategory } from '../../types'
 
 /**
- * Der Entwurf, den der Anpflanz-Flow über seine drei Schritte trägt.
- * Erst beim Einpflanzen wird daraus ein `NewPlantInput`.
+ * The draft the planting flow carries across its three steps.
+ * It only becomes a `NewPlantInput` when the plant is actually created.
  */
 export interface PlantDraft {
   category: PlantCategory | null
@@ -11,8 +11,8 @@ export interface PlantDraft {
   habitName: string
   intervalDays: number
   /**
-   * „Eigener Wert" ist aktiv — auch wenn die Zahl zufällig einem Preset
-   * entspricht. Sonst würde die Auswahl beim Tippen von „7" zurückspringen.
+   * "Custom value" is active — even when the number happens to match a preset.
+   * Otherwise the selection would jump back while typing a "7".
    */
   usesCustomRhythm: boolean
 }

@@ -3,21 +3,20 @@ import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from '
 import { t } from '../i18n'
 
 /**
- * Bottom Sheet: verdunkelter Hintergrund, Inhalt fährt von unten auf.
- * Schließt per Tippen auf den Hintergrund, per Escape — und per Zug am Griff
- * nach unten.
+ * Bottom sheet: dimmed backdrop, content rises from below.
+ * Closes on a tap outside, on Escape — and on dragging the handle down.
  *
- * Der Zug hängt **nur** am Griff, nicht am ganzen Sheet. Der Inhalt scrollt
- * (`overflow-y-auto`); würde jede Berührung eine Zuggeste starten, käme sich
- * beides in die Quere. Der Griff bekommt dafür einen großzügigen Trefferbereich
- * und `touch-none`, damit der Browser dort nicht selbst scrollt.
+ * The drag is bound **only** to the handle, not to the whole sheet. The content
+ * scrolls (`overflow-y-auto`); if every touch started a drag the two gestures
+ * would fight each other. The handle therefore gets a generous hit area and
+ * `touch-none` so the browser does not scroll there itself.
  */
 
 const ESCAPE_KEY = 'Escape'
 
-/** Ab dieser Strecke schließt das Sheet. */
+/** Past this distance the sheet closes. */
 const DISMISS_DISTANCE_PX = 96
-/** Ein schneller Wisch schließt auch früher — in Pixeln pro Millisekunde. */
+/** A quick flick closes earlier too — in pixels per millisecond. */
 const DISMISS_VELOCITY = 0.5
 
 interface DragStart {
@@ -27,7 +26,7 @@ interface DragStart {
 
 interface BottomSheetProps {
   onClose: () => void
-  /** id der Überschrift im Sheet — beschriftet den Dialog. */
+  /** id of the heading inside the sheet — labels the dialog. */
   labelledBy?: string
   children: ReactNode
 }
@@ -37,9 +36,9 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
   const [dragY, setDragY] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   /*
-   * Die Eintrittsanimation läuft mit `fill-mode: both` und würde ein inline
-   * gesetztes transform überstimmen. Deshalb fliegt die Klasse raus, sobald sie
-   * durch ist — der Endzustand entspricht dem natürlichen, es ruckelt nicht.
+   * The entry animation runs with `fill-mode: both` and would override an inline
+   * transform. The class is therefore dropped once it has finished — its end
+   * state equals the natural one, so nothing jumps.
    */
   const [hasEntered, setHasEntered] = useState(false)
 
@@ -60,7 +59,7 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!start.current) return
-    // Nur nach unten: nach oben soll sich das Sheet nicht dehnen lassen.
+    // Downwards only: the sheet must not stretch upwards.
     setDragY(Math.max(0, event.clientY - start.current.y))
   }
 
@@ -95,7 +94,7 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
         aria-modal="true"
         aria-labelledby={labelledBy}
         onAnimationEnd={(event) => {
-          // Nur die eigene Animation zählt, nicht die der Kinder.
+          // Only our own animation counts, not the children's.
           if (event.target === event.currentTarget) setHasEntered(true)
         }}
         style={{
@@ -109,9 +108,8 @@ export const BottomSheet = ({ onClose, labelledBy, children }: BottomSheetProps)
         }`}
       >
         {/*
-          Reine Zeigegeste — für Tastatur und Screenreader gibt es Escape und die
-          beschriftete Fläche dahinter, ein zweites Schließen-Element wäre nur
-          Lärm.
+          Pointer gesture only — keyboard and screen readers have Escape and the
+          labelled backdrop, so a second close control would just be noise.
         */}
         <div
           aria-hidden="true"

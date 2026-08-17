@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Der Zeitbezug, mit dem die Screens ihre Zustände ableiten.
+ * The time reference the screens derive their state from.
  *
- * Bewusst **ohne** `setInterval`: die Wachstumslogik rechnet ohnehin aus
- * Zeitstempeln, ein Timer würde nur Renderzyklen verbrennen und den Grundsatz
- * aus der CLAUDE.md aufweichen. Neu gelesen wird, wenn der Nutzer zur App
- * zurückkehrt — genau dann kann der Kalendertag gewechselt haben.
+ * Deliberately **without** `setInterval`: the growth logic computes from
+ * timestamps anyway, so a timer would only burn render cycles and soften the rule
+ * stated in CLAUDE.md. It is re-read when the user returns to the app — exactly
+ * when the calendar day may have changed.
  */
 export const useNow = (): number => {
   const [now, setNow] = useState(() => Date.now())

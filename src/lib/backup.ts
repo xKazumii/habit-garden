@@ -1,12 +1,12 @@
 /**
- * Sicherung als JSON-Datei.
+ * Backup as a JSON file.
  *
- * Die Daten liegen ausschließlich im Browser — wer den Speicher löscht, löscht
- * den Garten. Export und Import sind deshalb kein Komfort, sondern die einzige
- * Möglichkeit, die Historie zu behalten.
+ * The data lives in this browser only — clearing storage clears the garden.
+ * Export and import are therefore not a convenience but the only way to keep the
+ * history.
  *
- * Wie der Rest von `lib/` ohne UI- und Datenbank-Bezug: hier wird nur
- * umgewandelt und geprüft, geschrieben wird in src/db/plants.ts.
+ * Like the rest of `lib/`, free of UI and database ties: this module only
+ * converts and validates, writing happens in src/db/plants.ts.
  */
 
 import { MAX_INTERVAL_DAYS, MIN_INTERVAL_DAYS } from '../config/growth'
@@ -22,17 +22,17 @@ export interface BackupFile {
   exportedAt: number
   plants: Plant[]
   /**
-   * Optional, damit ältere Sicherungen ohne dieses Feld weiterhin sauber
-   * einlesen. Das Theme steht bewusst NICHT drin — es gehört zum Gerät.
+   * Optional so that older backups without this field still import cleanly. The
+   * theme deliberately is NOT part of it — it belongs to the device.
    */
   settings?: { gardenerName: string }
 }
 
 export interface ParsedBackup {
   plants: Plant[]
-  /** Datensätze, die die Prüfung nicht überstanden haben. */
+  /** Records that did not survive validation. */
   skipped: number
-  /** `null`, wenn die Datei keinen brauchbaren Namen mitbringt. */
+  /** `null` when the file carries no usable name. */
   gardenerName: string | null
 }
 
@@ -62,14 +62,14 @@ export const backupFileName = (now: number): string => {
 }
 
 /**
- * Prüft einen einzelnen Datensatz.
+ * Validates a single record.
  *
- * Streng bei allem, was sich nicht reparieren lässt (Id, Art, Name, Pflanzdatum),
- * nachsichtig bei allem anderen: ein fehlendes Intervall wird geklemmt, fehlende
- * Punkte werden aus den Gießvorgängen abgeleitet.
+ * Strict about everything that cannot be repaired (id, species, name, planting
+ * date), lenient about the rest: a missing interval is clamped, missing points
+ * are derived from the waterings.
  *
- * Die Kategorie kommt bewusst aus der Artdefinition und nicht aus der Datei —
- * sonst könnte eine manipulierte Sicherung eine Eiche als Kraut wachsen lassen.
+ * The category deliberately comes from the species definition rather than from
+ * the file — otherwise a tampered backup could grow an oak as a herb.
  */
 const parsePlant = (input: unknown): Plant | null => {
   if (typeof input !== 'object' || input === null) return null
@@ -111,9 +111,9 @@ const parsePlant = (input: unknown): Plant | null => {
 }
 
 /**
- * Der Name aus der Sicherung, sofern brauchbar.
- * Ein leerer Name in der Datei soll einen vorhandenen nicht überschreiben —
- * deshalb zählt er hier bereits als „nicht vorhanden".
+ * The name from the backup, if usable.
+ * An empty name in the file must not overwrite an existing one — so it already
+ * counts as "absent" here.
  */
 const parseGardenerName = (settings: unknown): string | null => {
   if (typeof settings !== 'object' || settings === null) return null
@@ -126,9 +126,9 @@ const parseGardenerName = (settings: unknown): string | null => {
 }
 
 /**
- * Liest eine Sicherung. `null` heißt: das ist keine Sicherung dieser App.
- * Einzelne kaputte Datensätze kippen dagegen nicht den ganzen Import — sie
- * werden gezählt und übersprungen.
+ * Reads a backup. `null` means: this is not a backup of this app.
+ * Individual broken records do not sink the whole import — they are counted and
+ * skipped.
  */
 export const parseBackup = (raw: string): ParsedBackup | null => {
   let parsed: unknown

@@ -1,9 +1,11 @@
 import { MAX_INTERVAL_DAYS, MIN_INTERVAL_DAYS } from '../config/growth'
+import { coinsEarnedFor } from '../lib/coins'
 import { reconcileStatus, water } from '../lib/growth'
 import type { NewPlantInput, Plant, StoredWaterOutcome } from '../types'
 import { db } from './db'
+import { bankCoins } from './settings'
 
-/** Felder, die im Bearbeiten-Flow geändert werden dürfen. */
+/** Fields the edit flow is allowed to change. */
 export type PlantEdit = Partial<Pick<Plant, 'habitName' | 'intervalDays'>>
 
 const createId = (): string =>
@@ -20,7 +22,7 @@ export const listPlants = (): Promise<Plant[]> => db.plants.orderBy('createdAt')
 
 export const getPlant = (id: string): Promise<Plant | undefined> => db.plants.get(id)
 
-/** Legt eine neue Pflanze an. Sie ist ab dem Pflanztag sofort fällig. */
+/** Creates a new plant. It is due immediately from its planting day. */
 export const plantSeedling = async (
   input: NewPlantInput,
   now: number = Date.now(),
@@ -43,9 +45,9 @@ export const plantSeedling = async (
 }
 
 /**
- * Gießt eine Pflanze. Die Regel selbst liegt in src/lib/growth.ts — hier wird
- * nur gelesen, geprüft und in einer Transaktion zurückgeschrieben, damit zwei
- * schnelle Taps nicht zwei Wachstumspunkte ergeben.
+ * Waters a plant. The rule itself lives in src/lib/growth.ts — here we only
+ * read, check and write back inside a transaction, so that two quick taps do not
+ * yield two growth points.
  */
 export const waterPlant = async (
   id: string,
@@ -57,7 +59,7 @@ export const waterPlant = async (
 
     const outcome = water(stored, now)
     if (!outcome.ok) {
-      // Der Tod kann erst beim Lesen auffallen — dann gleich festschreiben.
+      // Death may only surface on read — write it down right away.
       const reconciled = reconcileStatus(stored, now)
       if (reconciled !== stored) await db.plants.put(reconciled)
       return outcome
@@ -76,15 +78,28 @@ export const editPlant = async (id: string, changes: PlantEdit): Promise<void> =
   await db.plants.update(id, patch)
 }
 
-/** Ausgraben. Entfernt die Pflanze endgültig. */
-export const uprootPlant = (id: string): Promise<void> => db.plants.delete(id)
+/**
+ * Uproots. Removes the plant for good.
+ *
+ * Its earned coins are banked first: the earned total is derived from the
+ * watering history, and that history disappears here. Without banking, the
+ * balance could go negative after an uproot.
+ */
+export const uprootPlant = (id: string): Promise<void> =>
+  db.transaction('rw', db.plants, db.settings, async () => {
+    const stored = await db.plants.get(id)
+    if (!stored) return
+
+    await bankCoins(coinsEarnedFor(stored))
+    await db.plants.delete(id)
+  })
 
 /**
- * Übernimmt Pflanzen aus einer Sicherung.
+ * Takes plants over from a backup.
  *
- * Zusammenführend über die id, nicht ersetzend: dieselbe Datei zweimal zu
- * importieren ändert nichts, und ein Import löscht nie etwas, das nur im
- * Browser steht. Geprüft wurde bereits in src/lib/backup.ts.
+ * Merging by id rather than replacing: importing the same file twice changes
+ * nothing, and an import never deletes anything that only exists in this
+ * browser. Validation already happened in src/lib/backup.ts.
  */
 export const importPlants = async (plants: readonly Plant[]): Promise<number> => {
   if (plants.length === 0) return 0
@@ -94,11 +109,10 @@ export const importPlants = async (plants: readonly Plant[]): Promise<number> =>
 }
 
 /**
- * Schreibt für alle Pflanzen einen inzwischen erkannten Tod fest.
+ * Writes down a death that has meanwhile been detected, for all plants.
  *
- * Reine Bequemlichkeit für Abfragen — die Anzeige braucht das nicht, weil der
- * Zustand ohnehin bei jedem Render aus den Zeitstempeln berechnet wird. Wird
- * beim App-Start einmal aufgerufen.
+ * Purely a convenience for queries — the UI does not need it, because the state
+ * is derived from timestamps on every render anyway. Called once at app start.
  */
 export const reconcilePlantStatuses = async (now: number = Date.now()): Promise<number> => {
   const stored = await listPlants()

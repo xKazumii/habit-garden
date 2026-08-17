@@ -21,12 +21,12 @@ const makePlant = (overrides: Partial<Plant> = {}): Plant => ({
   ...overrides,
 })
 
-/** Sicherung mit beliebigem Inhalt, wie sie aus einer Datei käme. */
+/** A backup with arbitrary content, as it would come from a file. */
 const backupWith = (plants: unknown[]): string =>
   JSON.stringify({ app: BACKUP_APP, version: 1, exportedAt: JUNE_2, plants })
 
 describe('createBackup', () => {
-  it('umschließt die Pflanzen mit App-Kennung und Zeitstempel', () => {
+  it('wraps the plants with an app marker and a timestamp', () => {
     const backup = createBackup([makePlant()], 'Fenja', JUNE_2)
 
     expect(backup.app).toBe(BACKUP_APP)
@@ -35,7 +35,7 @@ describe('createBackup', () => {
     expect(backup.settings).toEqual({ gardenerName: 'Fenja' })
   })
 
-  it('kopiert die Liste, statt sie zu verlinken', () => {
+  it('copies the list instead of linking it', () => {
     const plants = [makePlant()]
     const backup = createBackup(plants, '', JUNE_2)
 
@@ -45,28 +45,28 @@ describe('createBackup', () => {
 })
 
 describe('backupFileName', () => {
-  it('enthält das lokale Datum', () => {
+  it('contains the local date', () => {
     expect(backupFileName(new Date(2026, 7, 9, 23, 30).getTime())).toBe('habit-garden-2026-08-09.json')
   })
 })
 
 describe('parseBackup', () => {
-  it('liest eine selbst erzeugte Sicherung verlustfrei', () => {
+  it('reads back a backup it created without loss', () => {
     const plant = makePlant()
     const raw = JSON.stringify(createBackup([plant], 'Fenja', JUNE_2))
 
     expect(parseBackup(raw)).toEqual({ plants: [plant], skipped: 0, gardenerName: 'Fenja' })
   })
 
-  it('weist alles zurück, was keine Sicherung dieser App ist', () => {
-    expect(parseBackup('kein json')).toBeNull()
+  it('rejects anything that is not a backup of this app', () => {
+    expect(parseBackup('not json')).toBeNull()
     expect(parseBackup('null')).toBeNull()
     expect(parseBackup('[]')).toBeNull()
     expect(parseBackup(JSON.stringify({ app: 'etwas-anderes', plants: [] }))).toBeNull()
     expect(parseBackup(JSON.stringify({ app: BACKUP_APP }))).toBeNull()
   })
 
-  it('überspringt kaputte Datensätze, statt den Import zu kippen', () => {
+  it('skips broken records instead of sinking the import', () => {
     const raw = backupWith([
       makePlant(),
       null,
@@ -80,20 +80,20 @@ describe('parseBackup', () => {
     expect(result?.skipped).toBe(3)
   })
 
-  it('weist unbekannte Arten ab', () => {
+  it('rejects unknown species', () => {
     const result = parseBackup(backupWith([makePlant({ species: 'drachenbaum' })]))
 
     expect(result?.plants).toHaveLength(0)
     expect(result?.skipped).toBe(1)
   })
 
-  it('nimmt die Kategorie aus der Artdefinition, nicht aus der Datei', () => {
+  it('takes the category from the species definition, not from the file', () => {
     const result = parseBackup(backupWith([makePlant({ species: 'oak', category: 'herb' })]))
 
     expect(result?.plants[0]?.category).toBe('tree')
   })
 
-  it('klemmt das Intervall in die erlaubten Grenzen', () => {
+  it('clamps the interval into the allowed bounds', () => {
     const result = parseBackup(
       backupWith([
         makePlant({ id: 'zu-klein', intervalDays: 0 }),
@@ -105,7 +105,7 @@ describe('parseBackup', () => {
     expect(result?.plants[1]?.intervalDays).toBe(MAX_INTERVAL_DAYS)
   })
 
-  it('leitet fehlende Felder aus den Gießvorgängen ab', () => {
+  it('derives missing fields from the waterings', () => {
     const raw = backupWith([
       {
         id: 'p1',
@@ -123,13 +123,13 @@ describe('parseBackup', () => {
     expect(plant?.status).toBe('alive')
   })
 
-  it('behält einen eingetragenen Tod', () => {
+  it('keeps a recorded death', () => {
     const result = parseBackup(backupWith([makePlant({ status: 'dead' })]))
 
     expect(result?.plants[0]?.status).toBe('dead')
   })
 
-  it('wirft unbrauchbare Zeitstempel aus den Gießvorgängen', () => {
+  it('drops unusable timestamps from the waterings', () => {
     const raw = backupWith([makePlant({ waterings: [JUNE_1, Number.NaN, JUNE_2] as number[] })])
 
     expect(parseBackup(raw)?.plants[0]?.waterings).toEqual([JUNE_1, JUNE_2])
@@ -139,20 +139,20 @@ describe('parseBackup', () => {
     const withSettings = (settings: unknown): string =>
       JSON.stringify({ app: BACKUP_APP, version: 1, exportedAt: JUNE_2, plants: [], settings })
 
-    it('liest den Namen aus der Sicherung', () => {
+    it('reads the name from the backup', () => {
       expect(parseBackup(withSettings({ gardenerName: '  Fenja  ' }))?.gardenerName).toBe('Fenja')
     })
 
-    it('ist null, wenn die Datei keinen Namen mitbringt', () => {
+    it('is null when the file carries no name', () => {
       expect(parseBackup(backupWith([]))?.gardenerName).toBeNull()
     })
 
-    it('wertet einen leeren Namen als nicht vorhanden', () => {
-      // Sonst würde eine alte Sicherung einen gesetzten Namen wieder löschen.
+    it('treats an empty name as absent', () => {
+      // Otherwise an old backup would wipe a name that is already set.
       expect(parseBackup(withSettings({ gardenerName: '   ' }))?.gardenerName).toBeNull()
     })
 
-    it('ignoriert kaputte Einstellungen, statt den Import zu kippen', () => {
+    it('ignores broken settings instead of sinking the import', () => {
       expect(parseBackup(withSettings(null))?.gardenerName).toBeNull()
       expect(parseBackup(withSettings('Fenja'))?.gardenerName).toBeNull()
       expect(parseBackup(withSettings({ gardenerName: 42 }))?.gardenerName).toBeNull()

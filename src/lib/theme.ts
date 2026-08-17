@@ -6,14 +6,14 @@ import {
 } from '../config/theme'
 
 /**
- * Auflösung der Theme-Präferenz. Rein und ohne DOM-Bezug — der Zugriff auf
- * localStorage und `matchMedia` liegt in src/hooks/useTheme.ts.
+ * Resolution of the theme preference. Pure and free of DOM ties — localStorage
+ * and `matchMedia` access lives in src/hooks/useTheme.ts.
  */
 
 export const isThemePreference = (value: unknown): value is ThemePreference =>
   typeof value === 'string' && THEME_PREFERENCES.includes(value as ThemePreference)
 
-/** Fällt bei allem Unbekannten auf „System" zurück, statt zu werfen. */
+/** Falls back to "system" for anything unknown instead of throwing. */
 export const toThemePreference = (value: unknown): ThemePreference =>
   isThemePreference(value) ? value : DEFAULT_THEME_PREFERENCE
 

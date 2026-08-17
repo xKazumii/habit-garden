@@ -6,9 +6,9 @@ import { saveGardenerName } from '../../db/settings'
 import { t } from '../../i18n'
 
 /**
- * Der Name im Gruß. Speichert bei jeder Eingabe — kein Speichern-Knopf, der
- * sich vergessen lässt. Das Feld hält seinen eigenen Zustand, damit der
- * Rückweg über IndexedDB den Cursor nicht verschiebt.
+ * The name used in the greeting. Saves on every keystroke — no save button that
+ * can be forgotten. The field keeps its own state so the round trip through
+ * IndexedDB does not move the cursor.
  */
 
 interface NameSectionProps {
@@ -21,7 +21,7 @@ export const NameSection = ({ initialName }: NameSectionProps) => {
   const onChange = (value: string) => {
     setName(value)
     void saveGardenerName(value).catch((error: unknown) => {
-      console.error('[db] Name speichern fehlgeschlagen', error)
+      console.error('[db] Saving the name failed', error)
     })
   }
 

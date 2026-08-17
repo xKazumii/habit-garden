@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 
 /**
- * Nebenaktion, immer paarweise nebeneinander verwendet (Bearbeiten /
- * Ausgraben, Behalten / Entfernen).
+ * Secondary action, always used in pairs side by side (edit / uproot,
+ * keep / remove).
  *
- * `danger` ist Terrakotta statt Rot — die Palette kennt kein Rot, und der
- * Akzent trägt hier genug Ernst.
+ * `danger` is terracotta rather than red — the palette has no red, and the accent
+ * carries enough gravity here.
  */
 
 type ButtonTone = 'neutral' | 'danger'

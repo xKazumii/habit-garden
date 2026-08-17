@@ -1,41 +1,45 @@
 import type { GrowthStage, HealthState } from '../types'
 
 /**
- * Maße und Zustandsregeln der Pflanzen-Illustration.
+ * Dimensions and state rules of the plant illustration.
  *
- * Alle Werte stammen aus dem Design-Prototyp. Die Illustration ist prozedural:
- * Stufe und Gesundheit sind zwei unabhängige Achsen, es gibt keine 20 gemalten
- * Varianten. Stufe skaliert die Geometrie, Gesundheit legt sich als
- * Überlagerung darüber.
+ * All values come from the design prototype. The illustration is procedural:
+ * stage and health are two independent axes, there are no drawn variants. The
+ * stage scales the geometry, health recolours the palette and makes the leaves
+ * droop.
  */
 
-/** Leinwand. Höher als breit, damit über der Pflanze Luft für den Hinweis bleibt. */
+/** Canvas. Taller than wide so there is room above the plant for the hint. */
 export const PLANT_VIEWBOX = '0 0 100 116'
 export const PLANT_ASPECT = 1.16
 
-/** Mitte und Bodenlinie — der Fußpunkt, um den geneigt und gewiegt wird. */
+/** Centre and ground line — the base point every plant is anchored to. */
 export const CENTER_X = 50
 export const GROUND_Y = 106
 
-export const PLANT_SHADOW = { cx: 50, cy: 108, rx: 26, ry: 5.5 } as const
+/**
+ * How far the whole plant is lifted out of the soil mound.
+ *
+ * The mound peaks at 89.5 but the plant is anchored at `GROUND_Y` (106), so
+ * without this the lower 16 units of stem would run down the face of the mound
+ * and the plant would read as standing *in front of* the hill. The design
+ * solves it here rather than by flattening the mound.
+ */
+export const PLANT_LIFT_Y = 10.5
 
-/** Zwei Erdhügel: der zweite ist nur eine Aufhellung auf dem ersten. */
-export const SOIL_MOUND_PATH = 'M24 108 Q50 90 76 108 Z'
-export const SOIL_HIGHLIGHT_PATH = 'M31 108 Q50 96 69 108 Z'
-
-/** Stufe 0 ist immer nur ein Samen in der Erde, unabhängig von der Art. */
-export const SEED = { cx: 50, cy: 98, rx: 3.4, ry: 2.6 } as const
-export const SEED_SHEEN_PATH = 'M46 101 Q50 99 54 101'
-export const SEED_SHEEN_WIDTH = 1.2
-
-/** Wassertropfen oben rechts, wenn eine Pflanze durstig ist. */
-export const DROP_HINT_PATH =
-  'M86 12c3.4 4 5.2 6.3 5.2 8.4a5.2 5.2 0 1 1-10.4 0c0-2.1 1.8-4.4 5.2-8.4Z'
-export const DROP_HINT_OPACITY = 0.95
+/** Pivot for the sway, lifted along with the plant. */
+export const SWAY_ORIGIN_Y = 96
 
 /**
- * Wachstumsfaktor je Stufe, indiziert mit `growthStage` (0–4).
- * Skaliert Höhe, Blattgröße und Kronenradius.
+ * Below this width the fine detail is skipped: leaf veins, pebbles, gradients,
+ * sparkles. At 44px none of it is visible anyway, and the bed renders twenty
+ * plants at once.
+ */
+export const DETAIL_MIN_SIZE = 72
+
+/**
+ * Growth factor per stage, indexed by `growthStage` (0–4).
+ * Scales height, leaf size and crown radius.
  */
 export const GROWTH_FACTOR: Readonly<Record<GrowthStage, number>> = {
   0: 0,
@@ -46,92 +50,137 @@ export const GROWTH_FACTOR: Readonly<Record<GrowthStage, number>> = {
 }
 
 /**
- * Wie sich ein Gesundheitszustand auf die Darstellung legt.
+ * How a health state changes the drawing.
  *
- * Bewusst vollständig datengetrieben: die Komponente entscheidet nichts
- * selbst, sie liest hier ab. Ein neuer Zustand wäre ein neuer Eintrag.
+ * Deliberately fully data-driven: the drawing functions decide nothing
+ * themselves, they read from here. A new state would be a new entry.
+ *
+ * Note there is no CSS filter any more. Health recolours the palette itself
+ * (`tint`) and bends the leaves down (`droop`) — that only touches the plant,
+ * not the soil, and reads far more organically than desaturating the result.
  */
+export interface HealthTint {
+  /** Colour the palette is blended towards. */
+  target: string
+  /** Share for leaves and stems. */
+  foliage: number
+  /** Share for blossoms, centres and fruit — kept lower so colour survives. */
+  bloom: number
+}
+
 export interface HealthRender {
-  /** Neigung um den Fußpunkt, in Grad. Negativ = leicht zum Betrachter. */
+  /** Tilt around the base point, in degrees. Negative leans towards the viewer. */
   rotation: number
-  /** CSS-Filter auf der ganzen Leinwand. `undefined` = kein Filter. */
-  filter: string | undefined
   opacity: number
-  /** Absacken in Leinwandeinheiten — die Pflanze hängt tiefer. */
-  sink: number
-  /** Stauchung längs der Achse. Wirkt wie ein stärkeres Beugen. */
-  slump: number
-  /** Lebende Pflanzen wiegen sich, welke und eingegangene nicht. */
+  /** Extra angle bending every leaf downwards. 0 = upright. */
+  droop: number
+  /** `null` for healthy — nothing is recoloured. */
+  tint: HealthTint | null
+  /** Vertical squash around the base point. 1 = none. */
+  squash: number
+  /** Slight widening that goes with the squash, so volume is preserved. */
+  spread: number
+  /** Living plants sway, wilting and dead ones do not. */
   sways: boolean
-  /** Wassertropfen-Hinweis über der Pflanze. */
+  /** Droplet hint above the plant. */
   showsDropHint: boolean
-  /** Trockene, hellere Erde. */
+  /** Dry, lighter soil with cracks and fallen leaves. */
   drySoil: boolean
 }
 
 export const HEALTH_RENDER: Readonly<Record<HealthState, HealthRender>> = {
   healthy: {
     rotation: 0,
-    filter: undefined,
     opacity: 1,
-    sink: 0,
-    slump: 1,
+    droop: 0,
+    tint: null,
+    squash: 1,
+    spread: 1,
     sways: true,
     showsDropHint: false,
     drySoil: false,
   },
   thirsty: {
-    rotation: -3.5,
-    filter: 'saturate(.72) brightness(1.04)',
-    opacity: 0.97,
-    sink: 0,
-    slump: 1,
+    rotation: -3,
+    opacity: 1,
+    droop: 13,
+    tint: { target: '#C9C293', foliage: 0.24, bloom: 0.14 },
+    squash: 1,
+    spread: 1,
     sways: true,
     showsDropHint: true,
     drySoil: false,
   },
   wilting: {
-    rotation: 8,
-    filter: 'saturate(.3) sepia(.2) brightness(.95)',
-    opacity: 0.9,
-    sink: 2,
-    slump: 1,
+    rotation: 7,
+    opacity: 0.96,
+    droop: 36,
+    tint: { target: '#8B6636', foliage: 0.62, bloom: 0.48 },
+    squash: 0.82,
+    spread: 1.05,
     sways: false,
     showsDropHint: false,
     drySoil: true,
   },
   /*
-   * Gleiche Neigung wie welk, aber stärker gebeugt: die Pflanze sackt weiter
-   * ab und wird gestaucht. Farbe fast raus, ins Bräunlich-Graue.
+   * Further than wilting in every direction: colour almost gone, deeply bent.
+   *
+   * Note what is deliberately NOT here: the plant keeps every leaf and its full
+   * crown. The design calls wilting "entsättigt, bräunlich" — a statement about
+   * colour, not a structural collapse. An earlier attempt also shrank leaves and
+   * dropped nodes, which turned a wilting herb into bare stalks.
    */
   dead: {
-    rotation: 8,
-    filter: 'saturate(.12) sepia(.34) brightness(.86)',
-    opacity: 0.82,
-    sink: 4,
-    slump: 0.93,
+    rotation: 9,
+    opacity: 0.88,
+    droop: 48,
+    tint: { target: '#6E5A44', foliage: 0.82, bloom: 0.7 },
+    squash: 0.72,
+    spread: 1.08,
     sways: false,
     showsDropHint: false,
     drySoil: true,
   },
 }
 
-/** Standardgrößen, damit die Screens keine eigenen Zahlen erfinden. */
+/** The trunk is blended towards this instead of the tint target — wood greys. */
+export const TRUNK_TINT_TARGET = '#8A7455'
+
+/** Standard sizes so the screens do not invent numbers of their own. */
 export const PLANT_SIZE = {
-  /** Zeile in „Heute". */
+  /** Row in "Today". */
   row: 44,
-  /** Bereits erledigte Zeile in „Heute" — kleiner, weil abgehakt. */
+  /** Already-done row in "Today" — smaller because it is ticked off. */
   rowDone: 36,
-  /** Vorschau im Anpflanz-Flow. */
+  /** Preview in the planting flow. */
   preview: 56,
-  /** Kachel in der Sortenauswahl. */
+  /** Tile in the species picker. */
   tile: 62,
-  /** Kategorie-Karte in Schritt 1. */
+  /** Category card in step 1. */
   category: 60,
-  /** Kachel im Beet. */
+  /** Tile in the bed. */
   bed: 74,
-  /** Bestätigung nach dem Anpflanzen. */
+  /** Confirmation after planting. */
   planted: 120,
-  /** Kopf des Detail-Sheets. */
+  /** Head of the detail sheet. */
   detail: 158,
 } as const
+
+/** Droplet in the top right corner when a plant is thirsty. */
+export const DROP_HINT_PATH =
+  'M86 12c3.4 4 5.2 6.3 5.2 8.4a5.2 5.2 0 1 1-10.4 0c0-2.1 1.8-4.4 5.2-8.4Z'
+export const DROP_HINT_OPACITY = 0.95
+export const DROP_HINT_GLINT = { cx: 84.4, cy: 19, rx: 1.1, ry: 1.6 } as const
+
+/**
+ * The same droplet, above the plant's centre — falls down while watering.
+ * Only the start point differs, the rest of the path is relative.
+ */
+export const POUR_DROP_PATH =
+  'M50 12c3.4 4 5.2 6.3 5.2 8.4a5.2 5.2 0 1 1-10.4 0c0-2.1 1.8-4.4 5.2-8.4Z'
+
+/**
+ * Duration of the falling droplet.
+ * MUST match `--animate-drop` in src/index.css (`hg-drop 900ms`).
+ */
+export const POUR_DURATION_MS = 900

@@ -4,9 +4,9 @@ import { buildHeatmap, type HeatLevel } from '../../lib/heatmap'
 import type { Plant } from '../../types'
 
 /**
- * Die letzten acht Wochen als Raster. Eine Spalte sind sieben
- * aufeinanderfolgende Tage — bewusst nicht auf Wochentage ausgerichtet, sonst
- * bliebe am Rand eine angebrochene Spalte stehen. Die letzte Zelle ist heute.
+ * The last eight weeks as a grid. A column is seven consecutive days —
+ * deliberately not aligned to weekdays, otherwise a partial column would be left
+ * at the edge. The last cell is today.
  */
 
 const CELL_SIZE_PX = 12

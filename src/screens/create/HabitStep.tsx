@@ -8,7 +8,7 @@ import type { PlantCategory } from '../../types'
 import type { PlantDraft } from './draft'
 
 /**
- * Schritt 3: Name und Rhythmus. Hier entsteht aus einer Sorte eine Gewohnheit.
+ * Step 3: name and rhythm. This is where a species becomes a habit.
  */
 
 const PREVIEW_STAGE = 3

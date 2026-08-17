@@ -5,11 +5,11 @@ import { categoryHint, categoryName } from '../../i18n/labels'
 import type { PlantCategory } from '../../types'
 
 /**
- * Schritt 1: die Kategorie. Sie entscheidet, wie viele Gießvorgänge eine
- * Wachstumsstufe kostet — deshalb steht das Tempo in der Beschreibung.
+ * Step 1: the category. It decides how many waterings one growth stage costs —
+ * which is why the pace is part of the description.
  */
 
-/** Ausgewachsen, aber noch nicht blühend: zeigt den Charakter ohne zu prahlen. */
+/** Grown but not yet blooming: shows the character without showing off. */
 const PREVIEW_STAGE = 3
 
 interface CategoryStepProps {
