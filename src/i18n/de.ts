@@ -75,6 +75,7 @@ export const de = {
   update: {
     available: 'Neue Version verfügbar',
     apply: 'Laden',
+    applying: 'Lädt …',
     sectionTitle: 'App-Version',
     check: 'Nach Updates suchen',
     checking: 'Wird geprüft …',
@@ -213,6 +214,11 @@ export const de = {
     healthState: 'Zustand: {state}',
     stageProgress: 'Stufe {stage} von {max}',
     heatmapTitle: 'Letzte 8 Wochen',
+    heatLevel: {
+      watered: 'gegossen',
+      idle: 'nichts fällig',
+      missed: 'vergessen',
+    },
     rate: '{percent} % versorgt',
     rateUnknown: 'noch keine Historie',
     water: 'Gießen',

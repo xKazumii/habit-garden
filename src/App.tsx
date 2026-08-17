@@ -189,7 +189,7 @@ export const App = () => {
       {content()}
 
       {/* Outside content() so it also shows while loading or onboarding. */}
-      {update.ready && <UpdateBanner onApply={update.apply} />}
+      {update.ready && <UpdateBanner onApply={update.apply} applying={update.applying} />}
     </div>
   )
 }

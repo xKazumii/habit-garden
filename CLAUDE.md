@@ -66,6 +66,18 @@ Der Worker wartet jetzt und übernimmt erst auf `SKIP_WAITING` — nachprüfbar 
 einer neuen Version, weil eine offene PWA tagelang kein `load` sieht. **Kein
 Timer**, dieselbe Auslösung wie bei `useNow()`.
 
+**Der Reload ist bewusst selbst gebaut.** Das Plugin lädt nur aus seinem
+`controlling`-Handler neu, und nur wenn `workbox-window` die Aktivierung als
+`isUpdate` einstuft — das setzt voraus, dass die Seite beim Registrieren schon von
+einem Worker mit derselben Skript-URL kontrolliert wurde. **In der installierten
+PWA gilt das nicht zuverlässig:** der neue Worker übernimmt, aber niemand lädt
+neu, und der Knopf wirkt kaputt. Im Browser fällt das nicht auf.
+
+Deshalb hängt `apply()` an `controllerchange` auf `navigator.serviceWorker` — das
+Ereignis hat diese Bedingung nicht — plus einem Fallback-Timeout von 1800 ms.
+Falls der Worker doch nicht aktiviert wurde, kommt der Banner nach dem Neuladen
+einfach wieder; ein Knopf, der sichtbar nichts tut, ist schlimmer.
+
 ---
 
 ## Stack
@@ -640,6 +652,11 @@ einmal pro überfälligem Tag.
 
 Das Raster ist spaltenweise gefüllt, sieben Zeilen, letzte Zelle ist heute. Die
 Spalten sind bewusst **nicht** auf Wochentage ausgerichtet.
+
+Darunter steht eine **Legende** für die drei sichtbaren Zustände (`before`
+bleibt weg, ein Tag vor dem Anpflanzen erklärt sich nicht). Die Farbfelder haben
+eine Haarlinie, weil `--hg-heat-empty` fast durchsichtig ist — ohne sie läse der
+wichtigste Eintrag als leere Lücke.
 
 ### Sicherung
 

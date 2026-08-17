@@ -10,9 +10,11 @@ import { t } from '../i18n'
 
 interface UpdateBannerProps {
   onApply: () => void
+  /** The reload is under way — the tap must be visibly acknowledged. */
+  applying: boolean
 }
 
-export const UpdateBanner = ({ onApply }: UpdateBannerProps) => (
+export const UpdateBanner = ({ onApply, applying }: UpdateBannerProps) => (
   <div
     role="status"
     className="pt-safe absolute inset-x-0 top-0 z-50 flex justify-center px-4"
@@ -23,9 +25,10 @@ export const UpdateBanner = ({ onApply }: UpdateBannerProps) => (
       <button
         type="button"
         onClick={onApply}
-        className="bg-primary text-on-primary shadow-primary rounded-pill px-3.5 py-1.5 text-[13px] font-semibold transition active:scale-95"
+        disabled={applying}
+        className="bg-primary text-on-primary shadow-primary rounded-pill px-3.5 py-1.5 text-[13px] font-semibold transition active:scale-95 disabled:opacity-70"
       >
-        {t('update.apply')}
+        {applying ? t('update.applying') : t('update.apply')}
       </button>
     </div>
   </div>

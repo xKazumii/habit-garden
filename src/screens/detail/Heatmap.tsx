@@ -10,6 +10,7 @@ import type { Plant } from '../../types'
  */
 
 const CELL_SIZE_PX = 12
+const LEGEND_SIZE_PX = 9
 const PERCENT = 100
 
 const LEVEL_CLASS: Readonly<Record<HeatLevel, string>> = {
@@ -18,6 +19,13 @@ const LEVEL_CLASS: Readonly<Record<HeatLevel, string>> = {
   missed: 'bg-heat-empty',
   before: 'bg-transparent',
 }
+
+/**
+ * `before` is left out: days from before planting carry no meaning worth
+ * explaining, and they are invisible anyway.
+ */
+type LegendLevel = Extract<HeatLevel, 'watered' | 'idle' | 'missed'>
+const LEGEND: readonly LegendLevel[] = ['watered', 'idle', 'missed']
 
 interface HeatmapProps {
   plant: Plant
@@ -52,6 +60,24 @@ export const Heatmap = ({ plant, now }: HeatmapProps) => {
           <span key={cell.day} className={`rounded-xs ${LEVEL_CLASS[cell.level]}`} />
         ))}
       </div>
+
+      <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-3">
+        {LEGEND.map((level) => (
+          <li key={level} className="text-muted flex items-center gap-1.5 text-[11px]">
+            {/*
+              A hairline around the swatch, because "missed" is nearly
+              transparent — without it the most important entry would read as a
+              blank gap.
+            */}
+            <span
+              aria-hidden="true"
+              className={`border-hairline rounded-xs border ${LEVEL_CLASS[level]}`}
+              style={{ width: LEGEND_SIZE_PX, height: LEGEND_SIZE_PX }}
+            />
+            {t(`detail.heatLevel.${level}`)}
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }

@@ -25,6 +25,8 @@ export interface AppUpdate {
   supported: boolean
   /** A newer version is downloaded and waiting to take over. */
   ready: boolean
+  /** The reload was triggered and is under way. */
+  applying: boolean
   /** A manual check is in flight. */
   checking: boolean
   /** The last manual check found nothing newer. */
@@ -41,14 +43,25 @@ export interface AppUpdate {
  */
 let registered = false
 
+/**
+ * If the controller never changes, reload anyway.
+ *
+ * A fresh navigation is still better than a button that appears to do nothing —
+ * and should the worker not have activated after all, the banner simply comes
+ * back.
+ */
+const RELOAD_FALLBACK_MS = 1800
+
 export const useAppUpdate = (): AppUpdate => {
   const [supported, setSupported] = useState(false)
   const [ready, setReady] = useState(false)
+  const [applying, setApplying] = useState(false)
   const [checking, setChecking] = useState(false)
   const [upToDate, setUpToDate] = useState(false)
 
-  const applyRef = useRef<() => void>(() => undefined)
+  const skipWaitingRef = useRef<() => void>(() => undefined)
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null)
+  const applyingRef = useRef(false)
 
   useEffect(() => {
     if (registered) return
@@ -85,10 +98,33 @@ export const useAppUpdate = (): AppUpdate => {
       },
     })
 
-    applyRef.current = () => void updateServiceWorker()
+    skipWaitingRef.current = () => void updateServiceWorker()
   }, [])
 
-  const apply = useCallback(() => applyRef.current(), [])
+  /**
+   * The reload is ours on purpose.
+   *
+   * The plugin only reloads from its `controlling` handler, and only when
+   * workbox flags the activation as `isUpdate` — which requires the page to have
+   * been controlled by a worker with the same script URL at registration time.
+   * In an installed PWA that does not hold reliably: the new worker takes over
+   * and nothing reloads. `controllerchange` on the container has no such
+   * condition.
+   */
+  const apply = useCallback(() => {
+    if (applyingRef.current) return
+    applyingRef.current = true
+    setApplying(true)
+
+    const reload = () => window.location.reload()
+
+    navigator.serviceWorker?.addEventListener('controllerchange', reload, { once: true })
+    window.setTimeout(reload, RELOAD_FALLBACK_MS)
+
+    // Both routes to the same message; sending it twice is harmless.
+    skipWaitingRef.current()
+    registrationRef.current?.waiting?.postMessage({ type: 'SKIP_WAITING' })
+  }, [])
 
   const check = useCallback(() => {
     const registration = registrationRef.current
@@ -114,5 +150,5 @@ export const useAppUpdate = (): AppUpdate => {
       .finally(() => setChecking(false))
   }, [])
 
-  return { supported, ready, checking, upToDate, apply, check }
+  return { supported, ready, applying, checking, upToDate, apply, check }
 }
