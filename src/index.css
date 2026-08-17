@@ -1,0 +1,340 @@
+@import 'tailwindcss';
+
+/*
+ * Design-Tokens.
+ *
+ * Die Werte stammen 1:1 aus dem Design-Prototyp (external/Habit Garden Prototyp).
+ * Alle Farben, Radien, Schatten und Kurven stehen hier als CSS-Variablen — nichts
+ * davon wird in Komponenten hart kodiert.
+ *
+ * Der Dark Mode ist als [data-theme="dark"]-Block vorbereitet (tiefes Waldgrün
+ * statt Schwarz), aber absichtlich noch nicht aktiviert: kein
+ * prefers-color-scheme, kein Umschalter. Zum Ausbauen reicht später das Attribut.
+ */
+:root {
+  /* Flächen */
+  --hg-canvas: #faf7f2;
+  --hg-surface: #ffffff;
+  /* Das Beet, auf dem die Pflanzen im Garten stehen */
+  --hg-bed: #f1ebe0;
+  /* Inaktive Flächen: deaktivierte Buttons, leere Fortschritts-Pips */
+  --hg-inert: #e4dfd5;
+  --hg-nav: rgba(250, 247, 242, 0.92);
+
+  /* Marke */
+  --hg-primary: #7c9885;
+  --hg-primary-strong: #64806d;
+  --hg-primary-soft: #eaf1eb;
+  --hg-accent: #d08c60;
+  --hg-accent-soft: #f8ece2;
+  --hg-secondary: #8fa9bf;
+  --hg-secondary-soft: #eaf0f5;
+
+  /* Text */
+  --hg-text: #2e3a32;
+  --hg-muted: #6b7a6e;
+  --hg-on-primary: #ffffff;
+
+  /* Zustände der Pflanzen. Die Illustration selbst entsättigt zusätzlich
+     über CSS-Filter — siehe HEALTH_RENDER in der CLAUDE.md. */
+  --hg-healthy: #7c9885;
+  --hg-thirsty: #8fa9bf;
+  --hg-wilting: #c8a06a;
+  --hg-gone: #a89f94;
+
+  /* Erde unter der Pflanze */
+  --hg-soil: #bc9271;
+  --hg-soil-dry: #b08b6c;
+  --hg-plant-shadow: rgba(46, 58, 50, 0.1);
+
+  /* Heatmap der letzten 8 Wochen */
+  --hg-heat-full: #7c9885;
+  --hg-heat-partial: rgba(124, 152, 133, 0.42);
+  --hg-heat-empty: rgba(46, 58, 50, 0.07);
+
+  /* Feine Trennlinien — sparsam, wir arbeiten mit Schatten statt Borders */
+  --hg-hairline: rgba(46, 58, 50, 0.07);
+
+  /* Weiche Schatten statt Rahmen */
+  --hg-shadow-card: 0 12px 26px -20px rgba(46, 58, 50, 0.5);
+  --hg-shadow-raised: 0 14px 30px -24px rgba(46, 58, 50, 0.6);
+  --hg-shadow-lifted: 0 22px 50px -34px rgba(46, 58, 50, 0.5);
+  --hg-shadow-nav: 0 -14px 30px -22px rgba(46, 58, 50, 0.5);
+  --hg-shadow-sheet: 0 -20px 50px -24px rgba(31, 42, 34, 0.5);
+  --hg-shadow-primary: 0 16px 30px -16px rgba(124, 152, 133, 0.95);
+  --hg-shadow-accent: 0 16px 30px -12px rgba(208, 140, 96, 0.95);
+  --hg-scrim: rgba(31, 42, 34, 0.34);
+
+  /* Radien: 16–24px, Sheets und Beet etwas runder */
+  --hg-radius-sm: 14px;
+  --hg-radius-md: 16px;
+  --hg-radius-lg: 20px;
+  --hg-radius-xl: 24px;
+  --hg-radius-bed: 26px;
+  --hg-radius-sheet: 30px;
+  --hg-radius-pill: 999px;
+
+  /* Bewegung — sanft, nie sprunghaft */
+  --hg-ease-soft: cubic-bezier(0.22, 0.9, 0.28, 1);
+  --hg-ease-pop: cubic-bezier(0.24, 1.2, 0.3, 1);
+  --hg-duration-fast: 160ms;
+  --hg-duration-base: 260ms;
+  --hg-duration-slow: 420ms;
+}
+
+/* Vorbereitet, noch nicht ausgebaut. */
+[data-theme='dark'] {
+  --hg-canvas: #1b241e;
+  --hg-surface: #243029;
+  --hg-bed: #202b23;
+  --hg-inert: #2c3830;
+  --hg-nav: rgba(27, 36, 30, 0.92);
+
+  --hg-primary: #8fb199;
+  --hg-primary-strong: #a3c1ad;
+  --hg-primary-soft: #23312a;
+  --hg-accent: #d08c60;
+  --hg-accent-soft: #33261d;
+  --hg-secondary: #8fa9bf;
+  --hg-secondary-soft: #202c33;
+
+  --hg-text: #e8efe7;
+  --hg-muted: #9aab9c;
+  --hg-on-primary: #10160f;
+
+  --hg-healthy: #8fb199;
+  --hg-thirsty: #8fa9bf;
+  --hg-wilting: #cfa976;
+  --hg-gone: #6f6a62;
+
+  --hg-heat-full: #8fb199;
+  --hg-heat-partial: rgba(143, 177, 153, 0.42);
+  --hg-heat-empty: rgba(232, 239, 231, 0.09);
+
+  --hg-hairline: rgba(232, 239, 231, 0.08);
+
+  --hg-shadow-card: 0 12px 26px -18px rgba(0, 0, 0, 0.6);
+  --hg-shadow-raised: 0 14px 30px -20px rgba(0, 0, 0, 0.65);
+  --hg-shadow-lifted: 0 22px 50px -30px rgba(0, 0, 0, 0.75);
+  --hg-shadow-nav: 0 -14px 30px -22px rgba(0, 0, 0, 0.6);
+  --hg-shadow-sheet: 0 -20px 50px -24px rgba(0, 0, 0, 0.7);
+  --hg-scrim: rgba(8, 14, 10, 0.52);
+}
+
+/*
+ * `inline` ist hier wichtig: die generierten Utilities referenzieren die Variable
+ * statt ihren Wert zu kopieren. Nur so wirkt ein späterer Theme-Wechsel zur Laufzeit.
+ */
+@theme inline {
+  --color-canvas: var(--hg-canvas);
+  --color-surface: var(--hg-surface);
+  --color-bed: var(--hg-bed);
+  --color-inert: var(--hg-inert);
+  --color-nav: var(--hg-nav);
+
+  --color-primary: var(--hg-primary);
+  --color-primary-strong: var(--hg-primary-strong);
+  --color-primary-soft: var(--hg-primary-soft);
+  --color-accent: var(--hg-accent);
+  --color-accent-soft: var(--hg-accent-soft);
+  --color-secondary: var(--hg-secondary);
+  --color-secondary-soft: var(--hg-secondary-soft);
+
+  --color-ink: var(--hg-text);
+  --color-muted: var(--hg-muted);
+  --color-on-primary: var(--hg-on-primary);
+
+  --color-healthy: var(--hg-healthy);
+  --color-thirsty: var(--hg-thirsty);
+  --color-wilting: var(--hg-wilting);
+  --color-gone: var(--hg-gone);
+
+  --color-soil: var(--hg-soil);
+  --color-soil-dry: var(--hg-soil-dry);
+
+  --color-hairline: var(--hg-hairline);
+  --color-scrim: var(--hg-scrim);
+
+  --radius-sm: var(--hg-radius-sm);
+  --radius-md: var(--hg-radius-md);
+  --radius-lg: var(--hg-radius-lg);
+  --radius-xl: var(--hg-radius-xl);
+  --radius-bed: var(--hg-radius-bed);
+  --radius-sheet: var(--hg-radius-sheet);
+  --radius-pill: var(--hg-radius-pill);
+
+  --shadow-card: var(--hg-shadow-card);
+  --shadow-raised: var(--hg-shadow-raised);
+  --shadow-lifted: var(--hg-shadow-lifted);
+  --shadow-nav: var(--hg-shadow-nav);
+  --shadow-sheet: var(--hg-shadow-sheet);
+  --shadow-primary: var(--hg-shadow-primary);
+  --shadow-accent: var(--hg-shadow-accent);
+
+  --ease-soft: var(--hg-ease-soft);
+  --ease-pop: var(--hg-ease-pop);
+
+  --font-sans: 'Outfit Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --animate-enter: hg-in var(--hg-duration-slow) ease both;
+  --animate-rise: hg-up 340ms var(--hg-ease-soft) both;
+  --animate-sway: hg-sway 5.5s ease-in-out infinite;
+  --animate-pulse-ring: hg-pulse 2.6s ease-out infinite;
+  --animate-pop: hg-pop 550ms var(--hg-ease-pop) both;
+  --animate-drop: hg-drop 900ms ease-out both;
+  --animate-grow: hg-grow 600ms var(--hg-ease-pop) both;
+}
+
+/*
+ * Micro-Animationen, übernommen aus dem Prototyp.
+ *  hg-in     Inhalte fahren beim Wechsel sanft ein
+ *  hg-up     Bottom Sheet und Vollbild-Flows fahren von unten auf
+ *  hg-sway   lebende Pflanzen wiegen sich minimal
+ *  hg-pulse  Ring um fällige Pflanzen
+ *  hg-pop    Bestätigung nach dem Anpflanzen
+ *  hg-drop   Wassertropfen beim Gießen
+ *  hg-grow   Pflanze hüpft beim Stufenaufstieg
+ */
+@keyframes hg-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hg-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hg-sway {
+  0%,
+  100% {
+    transform: rotate(-1.1deg);
+  }
+  50% {
+    transform: rotate(1.1deg);
+  }
+}
+
+@keyframes hg-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(124, 152, 133, 0.42);
+  }
+  70% {
+    box-shadow: 0 0 0 13px rgba(124, 152, 133, 0);
+  }
+}
+
+@keyframes hg-pop {
+  0% {
+    transform: scale(0.72);
+    opacity: 0;
+  }
+  62% {
+    transform: scale(1.07);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes hg-drop {
+  0% {
+    transform: translateY(-18px) scale(0.7);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(10px) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes hg-grow {
+  0% {
+    transform: scale(0.9) translateY(6px);
+  }
+  55% {
+    transform: scale(1.06) translateY(-4px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+@layer base {
+  html {
+    /* iOS: verhindert, dass beim Overscroll weiß durchblitzt */
+    background-color: var(--hg-canvas);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--hg-canvas);
+    color: var(--hg-text);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Bounce-Scrolling der Seite selbst unterdrücken, Listen scrollen weiter */
+    overscroll-behavior-y: none;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--hg-primary);
+    outline-offset: 3px;
+    border-radius: var(--hg-radius-sm);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Safe-Area-Insets für iOS. Immer über diese Utilities, nie hart kodiert. */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+@utility pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+/* Bottom Tab Bar: eigener Abstand plus Home-Indicator */
+@utility pb-safe-nav {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing) * 6);
+}
+@utility min-h-svh-safe {
+  min-height: 100svh;
+}
