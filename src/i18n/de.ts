@@ -40,8 +40,14 @@ export const de = {
 
   species: {
     basil: { name: 'Basilikum' },
+    mint: { name: 'Minze' },
+    lavender: { name: 'Lavendel' },
     sunflower: { name: 'Sonnenblume' },
+    tulip: { name: 'Tulpe' },
+    poppy: { name: 'Mohn' },
     oak: { name: 'Eiche' },
+    cherry: { name: 'Kirschbaum' },
+    olive: { name: 'Olivenbaum' },
   },
 
   stage: {

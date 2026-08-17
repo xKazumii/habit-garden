@@ -34,6 +34,13 @@ const BLOOMING_STAGE = 4
 const BLOOM_RADIUS = 3.4
 const BLOOM_LIFT = 3
 
+/** Ähre statt Punkt: vier Blüten übereinander, nach oben kleiner werdend. */
+const SPIKE_FLOWERS = 4
+const SPIKE_SPACING = 5
+const SPIKE_BASE_RADIUS = 2.6
+const SPIKE_RADIUS_STEP = 0.25
+const SPIKE_OPACITY = 0.92
+
 interface HerbBodyProps {
   visual: HerbVisual
   growthStage: GrowthStage
@@ -79,14 +86,26 @@ export const HerbBody = ({ visual, growthStage }: HerbBodyProps) => {
               )
             })}
 
-            {isBlooming && (
-              <circle
-                cx={stemX}
-                cy={stemTop - BLOOM_LIFT}
-                r={BLOOM_RADIUS}
-                fill={visual.bloom}
-              />
-            )}
+            {isBlooming &&
+              (visual.bloomStyle === 'spike'
+                ? Array.from({ length: SPIKE_FLOWERS }, (_unused, step) => (
+                    <circle
+                      key={step}
+                      cx={stemX}
+                      cy={stemTop - BLOOM_LIFT - step * SPIKE_SPACING}
+                      r={SPIKE_BASE_RADIUS - step * SPIKE_RADIUS_STEP}
+                      fill={visual.bloom}
+                      opacity={SPIKE_OPACITY}
+                    />
+                  ))
+                : (
+                    <circle
+                      cx={stemX}
+                      cy={stemTop - BLOOM_LIFT}
+                      r={BLOOM_RADIUS}
+                      fill={visual.bloom}
+                    />
+                  ))}
           </g>
         )
       })}

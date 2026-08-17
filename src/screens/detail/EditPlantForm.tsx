@@ -1,8 +1,9 @@
-import { useId, useState } from 'react'
+import { useState } from 'react'
 
 import { PrimaryButton } from '../../components/PrimaryButton'
 import { RhythmPicker } from '../../components/RhythmPicker'
 import { SecondaryButton } from '../../components/SecondaryButton'
+import { TextField } from '../../components/TextField'
 import { RHYTHM_PRESET_DAYS } from '../../config/rhythms'
 import type { PlantEdit } from '../../db/plants'
 import { t } from '../../i18n'
@@ -23,7 +24,6 @@ interface EditPlantFormProps {
 }
 
 export const EditPlantForm = ({ plant, onSave, onCancel }: EditPlantFormProps) => {
-  const habitFieldId = useId()
   const [habitName, setHabitName] = useState(plant.habitName)
   const [intervalDays, setIntervalDays] = useState(plant.intervalDays)
   const [isCustom, setIsCustom] = useState(() => !RHYTHM_PRESET_DAYS.includes(plant.intervalDays))
@@ -34,19 +34,12 @@ export const EditPlantForm = ({ plant, onSave, onCancel }: EditPlantFormProps) =
     <div className="animate-enter flex flex-col gap-5 pb-1">
       <h3 className="text-[15px] font-semibold">{t('detail.editTitle')}</h3>
 
-      <div className="flex flex-col gap-2.5">
-        <label htmlFor={habitFieldId} className="text-[13px] font-medium">
-          {t('create.habitLabel')}
-        </label>
-        <input
-          id={habitFieldId}
-          type="text"
-          value={habitName}
-          onChange={(event) => setHabitName(event.target.value)}
-          autoComplete="off"
-          className="bg-surface shadow-card text-ink w-full rounded-md px-4 py-[15px] text-sm outline-none"
-        />
-      </div>
+      <TextField
+        label={t('create.habitLabel')}
+        value={habitName}
+        onChange={setHabitName}
+        autoComplete="off"
+      />
 
       <RhythmPicker
         intervalDays={intervalDays}

@@ -1,5 +1,6 @@
-import { useId, useState } from 'react'
+import { useState } from 'react'
 
+import { TextField } from '../../components/TextField'
 import { MAX_GARDENER_NAME_LENGTH } from '../../config/settings'
 import { saveGardenerName } from '../../db/settings'
 import { t } from '../../i18n'
@@ -15,7 +16,6 @@ interface NameSectionProps {
 }
 
 export const NameSection = ({ initialName }: NameSectionProps) => {
-  const fieldId = useId()
   const [name, setName] = useState(initialName)
 
   const onChange = (value: string) => {
@@ -31,21 +31,17 @@ export const NameSection = ({ initialName }: NameSectionProps) => {
         {t('settings.nameTitle')}
       </h2>
 
-      <div className="bg-surface shadow-card flex flex-col gap-2.5 rounded-lg px-4.5 py-4">
-        <label htmlFor={fieldId} className="text-sm font-medium">
-          {t('settings.name.label')}
-        </label>
-        <input
-          id={fieldId}
-          type="text"
+      <div className="bg-surface shadow-card rounded-lg px-4.5 py-4">
+        <TextField
+          label={t('settings.name.label')}
           value={name}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={onChange}
           placeholder={t('settings.name.placeholder')}
+          hint={t('settings.name.hint')}
           maxLength={MAX_GARDENER_NAME_LENGTH}
           autoComplete="given-name"
-          className="bg-canvas text-ink placeholder:text-muted w-full rounded-md px-4 py-3 text-sm outline-none"
+          tone="inset"
         />
-        <span className="text-muted text-xs leading-snug">{t('settings.name.hint')}</span>
       </div>
     </section>
   )

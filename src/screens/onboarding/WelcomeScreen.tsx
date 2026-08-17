@@ -1,7 +1,8 @@
-import { useId, useState, type KeyboardEvent } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 
 import { AppMark } from '../../components/AppMark'
 import { PrimaryButton } from '../../components/PrimaryButton'
+import { TextField } from '../../components/TextField'
 import { MAX_GARDENER_NAME_LENGTH } from '../../config/settings'
 import { t } from '../../i18n'
 
@@ -21,7 +22,6 @@ interface WelcomeScreenProps {
 }
 
 export const WelcomeScreen = ({ onDone }: WelcomeScreenProps) => {
-  const fieldId = useId()
   const [name, setName] = useState('')
 
   const canSubmit = name.trim().length > 0
@@ -40,23 +40,16 @@ export const WelcomeScreen = ({ onDone }: WelcomeScreenProps) => {
         <p className="text-muted text-sm leading-relaxed">{t('onboarding.body')}</p>
       </div>
 
-      <div className="flex flex-col gap-2.5">
-        <label htmlFor={fieldId} className="text-[13px] font-medium">
-          {t('onboarding.nameLabel')}
-        </label>
-        <input
-          id={fieldId}
-          type="text"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder={t('onboarding.namePlaceholder')}
-          maxLength={MAX_GARDENER_NAME_LENGTH}
-          autoComplete="given-name"
-          className="bg-surface shadow-card text-ink placeholder:text-muted w-full rounded-md px-4 py-[15px] text-sm outline-none"
-        />
-        <span className="text-muted text-xs leading-snug">{t('onboarding.privacy')}</span>
-      </div>
+      <TextField
+        label={t('onboarding.nameLabel')}
+        value={name}
+        onChange={setName}
+        onKeyDown={onKeyDown}
+        placeholder={t('onboarding.namePlaceholder')}
+        hint={t('onboarding.privacy')}
+        maxLength={MAX_GARDENER_NAME_LENGTH}
+        autoComplete="given-name"
+      />
 
       <div className="flex flex-col items-center gap-2">
         <PrimaryButton onClick={() => onDone(name)} disabled={!canSubmit}>

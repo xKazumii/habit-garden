@@ -1,10 +1,9 @@
-import { useId, type ChangeEvent } from 'react'
-
 import { MAX_INTERVAL_DAYS, MIN_INTERVAL_DAYS } from '../config/growth'
 import { RHYTHM_PRESET_DAYS } from '../config/rhythms'
 import { t } from '../i18n'
 import { rhythmLabel } from '../i18n/labels'
 import { Pill } from './Pill'
+import { TextField } from './TextField'
 
 /**
  * Rhythmus wählen: Presets als Chips, alles andere über „eigener Wert".
@@ -25,10 +24,8 @@ interface RhythmPickerProps {
 }
 
 export const RhythmPicker = ({ intervalDays, isCustom, onChange }: RhythmPickerProps) => {
-  const customFieldId = useId()
-
-  const onCustomDays = (event: ChangeEvent<HTMLInputElement>) => {
-    const parsed = Number.parseInt(event.target.value, 10)
+  const onCustomDays = (value: string) => {
+    const parsed = Number.parseInt(value, 10)
     onChange(Number.isNaN(parsed) ? MIN_INTERVAL_DAYS : clampIntervalDays(parsed), true)
   }
 
@@ -53,23 +50,17 @@ export const RhythmPicker = ({ intervalDays, isCustom, onChange }: RhythmPickerP
       </div>
 
       {isCustom && (
-        <div className="animate-enter flex flex-col gap-2.5 pt-1.5">
-          <label htmlFor={customFieldId} className="text-[13px] font-medium">
-            {t('create.customDaysLabel')}
-          </label>
-          <input
-            id={customFieldId}
+        <div className="animate-enter pt-1.5">
+          <TextField
+            label={t('create.customDaysLabel')}
+            value={String(intervalDays)}
+            onChange={onCustomDays}
+            hint={t('create.customDaysHint', { min: MIN_INTERVAL_DAYS, max: MAX_INTERVAL_DAYS })}
             type="number"
             inputMode="numeric"
             min={MIN_INTERVAL_DAYS}
             max={MAX_INTERVAL_DAYS}
-            value={intervalDays}
-            onChange={onCustomDays}
-            className="bg-surface shadow-card text-ink w-full rounded-md px-4 py-[15px] text-sm outline-none"
           />
-          <span className="text-muted text-xs">
-            {t('create.customDaysHint', { min: MIN_INTERVAL_DAYS, max: MAX_INTERVAL_DAYS })}
-          </span>
         </div>
       )}
     </div>

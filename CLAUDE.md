@@ -334,6 +334,20 @@ Nur über die Utilities `pt-safe`, `pb-safe`, `pl-safe`, `pr-safe`,
 `pb-safe-nav` gehört an die Tab Bar, `pb-safe-sheet` an den Fuß von Sheets und
 Vollbild-Flows, `bottom-safe-fab` hält den FAB auf jedem Gerät über der Tab Bar.
 
+### Eingabefelder — mindestens 16 px
+
+**iOS Safari zoomt automatisch in jedes Eingabefeld, dessen Schriftgröße unter
+16 px liegt**, und zoomt danach nicht vollständig zurück. Die Seite bleibt
+verschoben, bis man von Hand zurückzieht.
+
+Deshalb: **kein `text-sm` an einem `<input>`.** Alle Felder laufen über
+`src/components/TextField.tsx`, das `text-base` setzt — die Regel gilt damit
+einmal und nicht in jedem Screen erneut. `tone="raised"` liegt auf der Leinwand,
+`tone="inset"` innerhalb einer Karte.
+
+`maximum-scale=1` im Viewport wäre die andere Lösung und ist **keine Option** —
+das schaltet das Pinch-Zoom für alle ab.
+
 ### Animationen
 
 Keyframes aus dem Prototyp, als Tailwind-Utilities verfügbar:
@@ -370,7 +384,9 @@ Gesundheit sind zwei unabhängige Achsen, keine 15 gezeichneten Varianten:
   `growthStage`. Er skaliert Höhe, Blattgröße und Kronenradius.
 - **Stufe 0** ist immer nur ein Samen in der Erde, unabhängig von der Art.
 - **Kraut**: 2 Stängel (ab Stufe 3 drei), je Stängel Blattpaare an festen
-  Positionen; auf Stufe 4 kleine Blüten.
+  Positionen; auf Stufe 4 Blüten. `bloomStyle` entscheidet, wie: `dot` ist ein
+  Punkt je Stängel, `spike` eine nach oben schmaler werdende Ähre (Lavendel).
+  Ohne Angabe gilt `dot`.
 - **Blume**: ein Stängel, zwei Blätter, Knospe wächst über die Stufen und öffnet
   sich auf Stufe 4 zu `petals` Blütenblättern um einen Mittelpunkt.
 - **Baum**: Stamm als Trapez-Pfad, ab Stufe 2 drei überlappende Kronenkreise,
@@ -388,9 +404,22 @@ Gesundheit sind zwei unabhängige Achsen, keine 15 gezeichneten Varianten:
   `--hg-thirsty`.
 - Lebende Pflanzen wiegen sich über `animate-sway`, welke nicht.
 
-Artspezifisch sind nur Farben und ein paar Zahlen (Blattfarben, Blütenfarbe,
-Anzahl und Größe der Blütenblätter, Stammfarbe, Fruchtfarbe). Phase 1 hat
-Basilikum, Sonnenblume und Eiche; weitere Arten sind reine Konfiguration.
+Artspezifisch sind nur Farben und ein paar Zahlen (Blattfarben, Blütenfarbe und
+-stil, Anzahl und Größe der Blütenblätter, Stammfarbe, Fruchtfarbe). Eine neue
+Art ist damit reine Konfiguration: ein Eintrag in `SPECIES` und ein Name in
+`src/i18n/de.ts`.
+
+Aktuell neun Arten, drei je Kategorie:
+
+| Kategorie | Arten |
+| --- | --- |
+| Kraut | Basilikum, Minze, Lavendel |
+| Blume | Sonnenblume, Tulpe, Mohn |
+| Baum | Eiche, Kirschbaum, Olivenbaum |
+
+Die Reihenfolge in `SPECIES` bestimmt die Anzeige im Anpflanz-Flow und über
+`defaultSpeciesFor()` die Vorauswahl. Der Sortenschritt rechnet mit drei Spalten
+— mehr als drei Arten pro Kategorie ergeben eine zweite Reihe.
 
 ---
 
@@ -447,6 +476,20 @@ Textfassungen, damit ohne Namen kein Komma übrig bleibt.
 Kein Router: der aktive Tab und alle Overlays sind State in `src/App.tsx`.
 Overlays liegen gestaffelt über der Shell — Detail-Sheet `z-20`, Anpflanzen
 `z-30`, Bestätigung `z-40`, FAB darunter auf `z-10`.
+
+### Bottom Sheet: Griff, Escape, Scrim
+
+Das Sheet schließt auf drei Wegen: Tippen auf den Hintergrund, Escape und Zug am
+Griff nach unten (ab 96 px oder bei schnellem Wisch).
+
+Der Zug hängt **nur am Griff**, nicht am ganzen Sheet — der Inhalt scrollt, beide
+Gesten am selben Element kämen sich in die Quere. Der Griff hat deshalb
+`touch-none` und einen großzügigen Trefferbereich, ist aber `aria-hidden`: für
+Tastatur und Screenreader gibt es Escape und die beschriftete Fläche dahinter.
+
+Eine Falle beim Ändern: `animate-rise` läuft mit `fill-mode: both` und würde ein
+inline gesetztes `transform` überstimmen. Die Klasse fliegt deshalb nach
+`onAnimationEnd` raus, bevor der Zug greift.
 
 ### Zeitbezug in der UI
 
